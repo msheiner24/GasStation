@@ -6,35 +6,64 @@
 
 class 	FuelTank   {
 private:
-	double	tankLevel ;	// the data to be protected, in this example a simple ‘double’, 
+	double	tankLevel[4] ;	// the data to be protected, in this example a simple ‘double’, 
 	int tankNumber;
 	CMutex	*theMutex;	// a pointer to a hidden mutex protecting the ‘tankLevel’ variable above
 
 public:
-	BOOL WithdrawFuel (double amount) 
+	BOOL WithdrawFuel (double amount, int FuelGrade) 
 	{ 
 		theMutex -> Wait() ;
+		int tankIndex = getTankIndex(FuelGrade);
 		BOOL Status = FALSE ;
-		if (tankLevel >= amount) 	{
+
+		if (tankLevel[tankIndex] >= amount) 	{
 		        Status = TRUE ;
-		        tankLevel = tankLevel - amount ;	
+		        tankLevel[tankIndex] = tankLevel[tankIndex] - amount ;
 		}
 		theMutex -> Signal() ;
 		return Status ;
 	} 
 
-	void AddFuel (double amount) 
+	void AddFuel (double amount, int FuelGrade)
 	{
 		theMutex -> Wait() ;
-		tankLevel = tankLevel + amount ;
+		int tankIndex = getTankIndex(FuelGrade);
+		tankLevel[tankIndex] = tankLevel[tankIndex] + amount ;
 		theMutex -> Signal() ;
 	}  
 	
-	void PrintTankLevel()
+	void PrintTankLevel(int FuelGrade)
 	{
 		theMutex -> Wait() ;
-		printf("Tank #%d Level = %g\n", tankNumber, tankLevel) ;
+		int tankIndex = getTankIndex(FuelGrade);
+		printf("Tank #%d FuelGrade %d has = %gL remaining\n", tankNumber, FuelGrade, tankLevel[tankIndex]) ;
 		theMutex -> Signal() ;
+	}
+
+	int getTankIndex(int FuelGrade) {
+		theMutex->Wait();
+
+		int tankIndex = 0;
+		switch (FuelGrade) {
+		case 87:
+			tankIndex = 0;
+			break;
+		case 90:
+			tankIndex = 1;
+			break;
+		case 92:
+			tankIndex = 2;
+			break;
+		case 94:
+			tankIndex = 3;
+			break;
+		default:
+			break;
+		}
+		theMutex->Signal();
+
+		return tankIndex;
 	}
 
 	// constructor and destructor
@@ -42,7 +71,7 @@ public:
 	{ 
 		tankNumber = _tankNumber;
 		theMutex = new CMutex ("MyFuelTank") ; 
-		tankLevel = 2000.0 ; 
+		tankLevel[4] = { 500.0 };
 	}
 
 	~FuelTank () {

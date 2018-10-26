@@ -69,8 +69,8 @@ private:
 			if (State == 1) {
 				if (GasLevel < Gas) {
 					GasLevel += 0.5;
-					pTank->WithdrawFuel(0.5);
-					pTank->PrintTankLevel();
+					//pTank->WithdrawFuel(0.5, FuelGrade);
+					//pTank->PrintTankLevel(FuelGrade);
 					SLEEP(1000);
 				}
 				else {
