@@ -5,7 +5,7 @@
 #pragma once
 #include <stdio.h>
 #include "rt.h"	
-// #include "FuelTank.h"
+#include "FuelTank.h"
 
 #ifndef   __Pump__
 #define   __Pump__
@@ -16,6 +16,7 @@ class Pump : public ActiveClass
 
 	// put any attributes and member functions here that you like 
 	// just like any other class along with any constructors and destructors
+	FuelTank *pTank;
 	int PumpNumber;
 	double MaxGas = 70.0;
 	double GasLevel = 0.0;
@@ -27,7 +28,7 @@ class Pump : public ActiveClass
 	int CreditCard = 0;
 
 public:
-	Pump(int _PumpNumber);
+	Pump(int _PumpNumber, FuelTank &Tank);
 	Pump();
 	~Pump();
 	void SetFuelGrade();
@@ -68,6 +69,8 @@ private:
 			if (State == 1) {
 				if (GasLevel < Gas) {
 					GasLevel += 0.5;
+					pTank->WithdrawFuel(0.5);
+					pTank->PrintTankLevel();
 					SLEEP(1000);
 				}
 				else {

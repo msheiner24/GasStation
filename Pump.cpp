@@ -8,10 +8,11 @@
 
 
 
-Pump::Pump(int _PumpNumber)	// call base class constructor with number
+Pump::Pump(int _PumpNumber, FuelTank &Tank)	// call base class constructor with number
 {
 	printf("Pump %d constructor being called\n", _PumpNumber);
 	PumpNumber = _PumpNumber;
+	pTank = &Tank;
 }
 
 Pump::Pump() 	// call default base class constructor 
