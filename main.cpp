@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "Pump.h"
 #include "Customer.h"
-// #include "FuelTank.h"
+#include "FuelTank.h"
 
 struct 	mydatapooldata {
 	int pumpnumber;
@@ -18,7 +18,15 @@ int main()
 	Customer Customer2(2, 182901, 5, 89);
 	Customer Customer3(1, 491891, 35, 91);
 	
-	Pump Pump1(1), Pump2(2), Pump3(3), Pump4(4);
+	FuelTank Tank1(1), Tank2(2), Tank3(3), Tank4(4);
+	FuelTank *pTank1, *pTank2, *pTank3, *pTank4;
+	pTank1 = &Tank1;
+	pTank2 = &Tank2;
+	pTank3 = &Tank3;
+	pTank4 = &Tank4;
+
+	Pump  Pump1(1, *pTank1), Pump2(2, *pTank2), Pump3(3, *pTank3), Pump4(4, *pTank4);
+
 
 
 	Customer1.Resume();
