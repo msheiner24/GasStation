@@ -55,8 +55,6 @@ private:
 	}
 
 	int main(void) {
-		printf("pump running");
-
 		std::string PumpName = std::to_string(PumpNumber);
 		CPipe	pipe(PumpName, 1024);		// Create a pipe 'p1' with the name "MyPipe2"
 		CSemaphore		ps1(PumpName, 0, 1);    // semaphore with initial value 0 and max value 1
@@ -69,8 +67,8 @@ private:
 			if (State == 1) {
 				if (GasLevel < Gas) {
 					GasLevel += 0.5;
-					pTank->WithdrawFuel(0.5);
-					pTank->PrintTankLevel();
+					pTank->WithdrawFuel(0.5, FuelGrade);
+					pTank->PrintTankLevel(FuelGrade);
 					SLEEP(1000);
 				}
 				else {
