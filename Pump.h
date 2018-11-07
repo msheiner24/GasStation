@@ -70,18 +70,15 @@ private:
 		CSemaphore Empty(("empty" + PumpNumber), 0, 1);
 		EntrySem.Signal();
 
-		CDataPool 		dp("dataPoolPump" + PumpNumber, sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
-		//CPipe	pipe(PumpName, 1024);			// Create a pipe to communicate with customer
-		//CSemaphore		ps1(PumpName, 0, 1);    // semaphore with initial value 0 and max value 1
-		//CSemaphore		cs1(PumpName, 1, 1);    // semaphore with initial value 1 and max value 1
+		CDataPool 		dp("dataPoolPump" + PumpNumber , sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
 		CRendezvous     rvPump("rvPump", 4);		// Attempt to create a rendezvous object involving 4 threads
-		//cs1.Signal();
 		rvPump.Wait();
 
 		struct CustomerInfo 	 *newCustomer = (struct CustomerInfo *)(dp.LinkDataPool());
 
 		newCustomer->newArrival = 0;
 		newCustomer->Authorized = 0;
+		newCustomer->CreditCard = 1111;
 		for (int i = 0; i < 10000; i++) {
 			if (State == 1) {
 				if (newCustomer->CurrentGasLevel < newCustomer->MaxGasLevel) {
@@ -108,6 +105,8 @@ private:
 					//pipe.Read(&newCustomer->FuelGrade, sizeof(newCustomer->FuelGrade));
 					//pipe.Read(&newCustomer->CreditCard, sizeof(newCustomer->CreditCard));
 					//cs1.Signal();
+					newCustomer->newArrival = 1;
+
 					Full.Wait();
 					pipe.Read(&GasStr);
 					newCustomer->MaxGasLevel = std::stod(GasStr);
@@ -118,19 +117,19 @@ private:
 					pipe.Read(&CreditCardStr);
 					newCustomer->CreditCard = std::stoi(CreditCardStr, nullptr, 10);
 					pipe.Read(&CustomerName);
-
-					//printf("NEW CUSTOMER ARRIVED AT PUMP %s\n", PumpNumber.c_str());
-					newCustomer->newArrival = 1; 
-					while (newCustomer->Authorized != 1){
-						SLEEP(500);
-					}
-					//printf("NEW CUSTOMER AUTHORIZED AT PUMP %s\n", PumpNumber.c_str());
-					SetFuelGrade(newCustomer->FuelGrade);
-					FillGas(newCustomer->MaxGasLevel);
-					Print2Dos(0); // Print pump status to DOS
 					ExitSem.Signal();
 					Empty.Wait();
 					EntrySem.Signal();
+					printf("NEW CUSTOMER ARRIVED AT PUMP %s\n", PumpNumber.c_str());
+					//newCustomer->newArrival = 1; 
+					while (newCustomer->Authorized != 1){
+						SLEEP(500);
+					}
+					printf("NEW CUSTOMER AUTHORIZED AT PUMP %s\n", PumpNumber.c_str());
+					SetFuelGrade(newCustomer->FuelGrade);
+					FillGas(newCustomer->MaxGasLevel);
+					Print2Dos(0); // Print pump status to DOS
+
 				}
 			}
 		}

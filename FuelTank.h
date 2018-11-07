@@ -1,5 +1,7 @@
 #pragma once
 #include "Z:\RTExamples\rt.h"
+#include <stdio.h>
+#include <string>
 
 #ifndef   __FuelTank__
 #define   __FuelTank__
@@ -12,6 +14,15 @@ private:
 	double tankLevel93;
 	int tankNumber;
 	CMutex	*theMutex;	// a pointer to a hidden mutex protecting the ‘tankLevel’ variable above
+	/*struct tankDataPool {
+		double tankLevel87;
+		double tankLevel89;
+		double tankLevel91;
+		double tankLevel93;
+	};*/
+
+
+
 
 public:
 	BOOL WithdrawFuel (double amount, int FuelGrade) 
@@ -130,6 +141,9 @@ public:
 	{ 
 		
 		tankNumber = _tankNumber;
+		//CDataPool 		dp("dataPoolTank" + tankNumber, sizeof(struct tankDataPool));	// Create a datapool to communicate with gsc
+		//struct tankDataPool 	 *tankInfo = (struct tankDataPool *)(dp.LinkDataPool());
+
 		theMutex = new CMutex ("MyFuelTank") ; 
 		theMutex->Wait();
 		tankLevel87 = 500.0;

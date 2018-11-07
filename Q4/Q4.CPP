@@ -30,10 +30,11 @@ UINT __stdcall PumpComm(void *args)
 	int PumpNumber = *(int *)(args);
 	std::string PumpName = std::to_string(PumpNumber);
 
-	CDataPool 		dp("dataPoolPump" + PumpNumber, sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+	CDataPool 		dp("dataPoolPump" + PumpName , sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
 	struct CustomerInfo 	 *pumpDataPool = (struct CustomerInfo *)(dp.LinkDataPool());
 
 	printf("Thread created to communicate with Pump %d", PumpNumber);
+	printf("reading credit card number : %d", pumpDataPool->CreditCard);
 	while (pumpDataPool->newArrival == 0) {
 		printf("new arrival at pump %d:   %d", PumpNumber, pumpDataPool->newArrival);
 
@@ -71,6 +72,12 @@ UINT __stdcall PumpComm(void *args)
 	return 0;
 }						// end of structure template
 
+//UINT __stdcall TankComm(void *args)
+//{
+//
+//}
+
+
 int   main()
 {
 	int i ;
@@ -81,16 +88,17 @@ int   main()
 //	in it) but that shouldn't matter, since the program can just attempt to make it. If it already exists
 //	then it will simply use it. If it doesn't exist, then it will be created below
 
-	/*CDataPool 		pump1dp("pump1", sizeof(struct CustomerInfo)) ;
-	CDataPool 		pump2dp("pump1", sizeof(struct CustomerInfo));
-	CDataPool 		pump3dp("pump1", sizeof(struct CustomerInfo));
-	CDataPool 		pump4dp("pump1", sizeof(struct CustomerInfo));*/
 
 	int Num[4] = { 1,2,3,4 };
 	CThread *Threads[4];
 	for (int i = 0; i <= 3; i++) {
 		Threads[i] = new CThread(PumpComm, ACTIVE, &Num[i]);
 	}
+	//CThread	TankThread(TankComm,			// name of function representing the thread
+	//	ACTIVE,				// thread is created in ACTIVE state (could use SUSPENDED)
+	//	NULL					// Pass no arguments to the thread function
+	//);
+
 
 	
 	getchar();			// pause seconds so programmer can view output before child dies
