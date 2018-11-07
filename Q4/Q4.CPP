@@ -21,6 +21,44 @@ struct CustomerInfo {
 	int CreditCard = 0;
 };
 
+UINT __stdcall PumpComm(void *args)
+{
+	
+	int PumpNumber = *(int *)(args);
+	printf("Child Thread Created to Communicate with Pump Number: %d", PumpNumber);
+	CDataPool 		dp("pump1", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+	if (PumpNumber == 1) {
+		CDataPool 		dp("pump1", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+	}
+	else if (PumpNumber == 2) {
+		CDataPool 		dp("pump2", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+	}
+	else if (PumpNumber == 3) {
+		CDataPool 		dp("pump3", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+	}
+	else if (PumpNumber == 4) {
+		CDataPool 		dp("pump4", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+	}
+	else {
+		printf("Could not create datapool");
+	}
+	struct CustomerInfo 	 *pumpDataPool = (struct CustomerInfo *)(dp.LinkDataPool());
+
+
+	//printf("Child Thread.....\n");
+	printf("Child Read value %d for Credit Card From Pump Number %d\n", pumpDataPool->CreditCard, PumpNumber);
+	printf("Child Read value %d for FuelGrade Card From Pump Number %d\n", pumpDataPool->FuelGrade, PumpNumber);
+
+
+
+	// The CDatapool object 'dp' created at the start of the program will now be destroyed
+	// and provided there are no other processes using the same named datapool, then that datapool
+	// will also be destroyed
+
+	//getchar();			// pause seconds so programmer can view output before child dies
+
+	return 0;
+}						// end of structure template
 
 int   main()
 {
@@ -35,26 +73,16 @@ int   main()
 
 	printf("Child attempting to create/use the datapool.....\n") ;
 	CDataPool 		pump1dp("pump1", sizeof(struct CustomerInfo)) ;
-	
-// In order to access the data pool, we need a pointer to its location in memory. This is what
-// the LinkDataPool() primitive does as we saw in the parent program
-	
-//	struct mydatapooldata 	 *MyDataPool = (struct mydatapooldata *)(0x1000) ;    // just to show an error
+	CDataPool 		pump2dp("pump1", sizeof(struct CustomerInfo));
+	CDataPool 		pump3dp("pump1", sizeof(struct CustomerInfo));
+	CDataPool 		pump4dp("pump1", sizeof(struct CustomerInfo));
 
-	struct CustomerInfo 	 *pump1Info = (struct CustomerInfo *)(pump1dp.LinkDataPool()) ;
+	int Num[4] = { 1,2,3,4 };
+	CThread *Threads[4];
+	for (int i = 0; i <= 3; i++) {
+		Threads[i] = new CThread(PumpComm, ACTIVE, &Num[i]);
+	}
 
-	printf("Child linked to datapool at address %p.....\n", pump1Info) ;
-
-// print out the data in the datapool that was stored there by the parent
-
-	printf("Child Read value for Floor = %d\n", pump1Info->CreditCard) ;
-	printf("Child Read value for Direction = %d\n", pump1Info->FuelGrade) ;
-
-	printf("\n");
-
-// The CDatapool object 'dp' created at the start of the program will now be destroyed
-// and provided there are no other processes using the same named datapool, then that datapool
-// will also be destroyed
 	
 	getchar();			// pause seconds so programmer can view output before child dies
 
