@@ -5,6 +5,7 @@
 #pragma once
 #include <stdio.h>
 #include "rt.h"	
+using namespace std;
 
 #ifndef   __Customer__
 #define   __Customer__
@@ -15,28 +16,34 @@ class Customer : public ActiveClass
 	// put any attributes and member functions here that you like 
 	// just like any other class along with any constructors and destructors
 
-	int PumpNumber;
-	int CreditCard;
-	double Gas;
-	int FuelGrade;
+	string PumpNumber;
+	string CreditCard;
+	string Gas;
+	string FuelGrade;
+	string CustomerName;
 
 public:
-	Customer(int _PumpNumber, int _CreditCard, double _Gas, int _FuelGrade);
+	Customer(string _PumpNumber, string _CreditCard, string _Gas, string _FuelType, string _CustomerName);
 	Customer();
 	~Customer();
 
 private:
 
 	int main(void) {
-		std::string PumpName = std::to_string(PumpNumber);
-		CPipe	pipe(PumpName, 1024);		// Create a pipe 'p1' with the name "MyPipe2"
-		CSemaphore		ps1(PumpName, 0, 1);    // semaphore with initial value 0 and max value 1
-		CSemaphore		cs1(PumpName, 1, 1);    // semaphore with initial value 1 and max value 1
-		cs1.Wait();
-		pipe.Write(&Gas, sizeof(Gas));
-		pipe.Write(&FuelGrade, sizeof(FuelGrade));
-		pipe.Write(&CreditCard, sizeof(CreditCard));
-		ps1.Signal();
+
+		CTypedPipe <string> pipe(PumpNumber, 4);
+		CSemaphore EntrySem(("entry" + PumpNumber), 0, 1);
+		CSemaphore ExitSem(("exit" + PumpNumber), 0, 1);
+		CSemaphore Full(("full" + PumpNumber), 0, 1);
+		CSemaphore Empty(("empty" + PumpNumber), 0, 1);
+		EntrySem.Wait();
+		Full.Signal();
+		pipe.Write(&Gas);
+		pipe.Write(&FuelGrade);
+		pipe.Write(&CreditCard);
+		pipe.Write(&CustomerName);
+		ExitSem.Wait();
+		Empty.Signal();
 		return 0;
 	}
 };

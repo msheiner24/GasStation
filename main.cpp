@@ -15,11 +15,10 @@ struct 	mydatapooldata {
 int main()
 {
 
+	Customer Customer1("1", "1218919090", "9", "87", "Obama");
+	Customer Customer2("2", "1829013729", "5", "89", "Hilary Clinton");
+	Customer Customer3("2", "1118911133", "6", "91", "Justin Trudeau");
 
-	Customer Customer1(1, 721891, 9, 87);
-	Customer Customer2(2, 182901, 5, 89);
-	Customer Customer3(1, 491891, 35, 91);
-	
 	FuelTank Tank1(1), Tank2(2), Tank3(3), Tank4(4);
 	FuelTank *pTank1, *pTank2, *pTank3, *pTank4;
 	pTank1 = &Tank1;
@@ -27,7 +26,8 @@ int main()
 	pTank3 = &Tank3;
 	pTank4 = &Tank4;
 
-	Pump  Pump1(1, *pTank1), Pump2(2, *pTank2), Pump3(3, *pTank3), Pump4(4, *pTank4);
+	Pump  Pump1("1", *pTank1), Pump2("2", *pTank2), Pump3("3", *pTank3), Pump4("4", *pTank4);
+
 
 	CProcess gsc(".\\Q4\\debug\\q4.exe",	// pathlist to child program executable
 		NORMAL_PRIORITY_CLASS,			// priority

@@ -7,6 +7,7 @@
 #include <string>
 #include "rt.h"	
 #include "FuelTank.h"
+using namespace std;
 
 #ifndef   __Pump__
 #define   __Pump__
@@ -18,7 +19,7 @@ class Pump : public ActiveClass
 	// put any attributes and member functions here that you like 
 	// just like any other class along with any constructors and destructors
 	FuelTank *pTank;
-	int PumpNumber;
+	string PumpNumber;
 	double MaxGas = 70.0;
 	struct CustomerInfo {
 		double CurrentGasLevel = 0.0;
@@ -29,136 +30,112 @@ class Pump : public ActiveClass
 		bool Authorized = 0;
 		bool newArrival = 0;
 	};
+	double CurrentGasLevel = 0.0;
+	double MaxGasLevel = 0;
+	double Bill = 0.0;
+	int FuelGrade = 87;
+	int CreditCard = 0;
+
 	int State = 0;
 	double Price = 0.0;
-
+	int CursorY;
+	string FuelGradeType = "REGULAR UNLEADED";
+	string CustomerName;
+	string CreditCardStr;
+	string FuelGradeStr;
+	string GasStr;
+	
 public:
-	Pump(int _PumpNumber, FuelTank &Tank);
+	Pump(string _PumpNumber, FuelTank &Tank);
 	Pump();
 	~Pump();
 	void SetFuelGrade(int FuelGrade);
 	void FillGas(double Gas);
+	void Print2Dos(int pump_state);
 
 private:
 
-	//  Must override main() inherited from ActiveClass. The base class constructor will then
-	//	create a thread to run though the function main()
-
-	int PumpStatus(void *ThreadArgs)
-	{
-		//int *Speed = (int *)(ThreadArgs);	// get the message passed to the thread. Note cast from 'void *' to 'char *'
-
-		for (int i = 0; i < 10000; i++) {
-			if (State == 1)
-				//printf("Pump %d is currently filling. Gas Level is at %f litres \n", PumpNumber, newCustomer->CurrentGasLevel);
-				printf("Pump %d is currently filling", PumpNumber);
-			else {
-				printf("Pump %d is currently off \n", PumpNumber);
-			}
-			SLEEP(2000);
-		}
-		return 0;									// thread ends here
-	}
-
 	int main(void) {
-		std::string PumpName = std::to_string(PumpNumber);
-		/*std::string datapoolPref = "datapoolPump";
-		std::string dataPoolName = datapoolPref + PumpName;
-		*/
-		char buffer[128];
-		std::string datapoolPref = "datapoolPump";
-		snprintf(buffer, sizeof(buffer), "%s%d", datapoolPref.c_str(), PumpNumber);
-		
-		CPipe	pipe(PumpName, 1024);			// Create a pipe to communicate with customer
-		printf("%.*s", 13, buffer);
+		//std::string PumpName = std::to_string(PumpNumber);
 
-		//printf("attempting to create datapool %s", buffer);
+		CursorY = std::stoi(PumpNumber, nullptr, 10);
+		CursorY = (6 * (CursorY - 1));
+		Print2Dos(1); // Print pump status to DOS
+		//Initialize pipes, semaphores 
+		CMutex M("DOSMutex"); // mutex to protect DOS window
+		CTypedPipe <string> pipe(PumpNumber, 4);
+		CSemaphore EntrySem(("entry" + PumpNumber), 0, 1);
+		CSemaphore ExitSem(("exit" + PumpNumber), 0, 1);
+		CSemaphore Full(("full" + PumpNumber), 0, 1);
+		CSemaphore Empty(("empty" + PumpNumber), 0, 1);
+		EntrySem.Signal();
 
-		CDataPool 		dp(buffer, sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
-
-		/*CreateDataPool();
-		if (PumpNumber == 1) {
-			CDataPool 		dp("pump1", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
-		}
-		else if (PumpNumber == 2) {
-			CDataPool 		dp("pump2", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
-		}
-		else if (PumpNumber == 3) {
-			CDataPool 		dp("pump3", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
-		}
-		else if (PumpNumber == 4) {
-			CDataPool 		dp("pump4", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
-		}
-		else {
-			CDataPool 		dp("pump4", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
-		}*/
-		CSemaphore		ps1(PumpName, 0, 1);    // semaphore with initial value 0 and max value 1
-		CSemaphore		cs1(PumpName, 1, 1);    // semaphore with initial value 1 and max value 1
+		CDataPool 		dp("dataPoolPump" + PumpNumber, sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+		//CPipe	pipe(PumpName, 1024);			// Create a pipe to communicate with customer
+		//CSemaphore		ps1(PumpName, 0, 1);    // semaphore with initial value 0 and max value 1
+		//CSemaphore		cs1(PumpName, 1, 1);    // semaphore with initial value 1 and max value 1
 		CRendezvous     rvPump("rvPump", 4);		// Attempt to create a rendezvous object involving 4 threads
-		cs1.Signal();
+		//cs1.Signal();
 		rvPump.Wait();
 
 		struct CustomerInfo 	 *newCustomer = (struct CustomerInfo *)(dp.LinkDataPool());
-		printf("GSC linked to datapool %d at address %p.....\n", PumpNumber, newCustomer);
 
 		newCustomer->newArrival = 0;
 		newCustomer->Authorized = 0;
-		ClassThread<Pump> StatusThread(this, &Pump::PumpStatus, ACTIVE, NULL);
 		for (int i = 0; i < 10000; i++) {
 			if (State == 1) {
 				if (newCustomer->CurrentGasLevel < newCustomer->MaxGasLevel) {
 					newCustomer->CurrentGasLevel += 0.5;
+					CurrentGasLevel = newCustomer->CurrentGasLevel;
 					pTank->WithdrawFuel(0.5, newCustomer->FuelGrade);
 					pTank->PrintTankLevel(newCustomer->FuelGrade);
+					Print2Dos(0); // Print pump status to DOS
 					SLEEP(1000);
 				}
 				else {
 					newCustomer->Bill = Price * newCustomer->MaxGasLevel;
-					printf("Pump %d finished filling to %f litres. Bill is $ %f\n", PumpNumber, newCustomer->MaxGasLevel, newCustomer->Bill);
 					newCustomer->Authorized = 0;
 					newCustomer->newArrival = 0;
 					State = 0;
 				}
 			}
 			else {			
-				if ((pipe.TestForData() >= sizeof(newCustomer->MaxGasLevel)) && (pipe.TestForData() >= sizeof(newCustomer->FuelGrade))) {
-					ps1.Wait();
-					pipe.Read(&newCustomer->MaxGasLevel, sizeof(newCustomer->MaxGasLevel));
-					pipe.Read(&newCustomer->FuelGrade, sizeof(newCustomer->FuelGrade));
-					pipe.Read(&newCustomer->CreditCard, sizeof(newCustomer->CreditCard));
-					SetFuelGrade(newCustomer->FuelGrade);
-					cs1.Signal();
-					printf("NEW CUSTOMER ARRIVED AT PUMP %d\n", PumpNumber);
+				//if ((pipe.TestForData() >= sizeof(newCustomer->MaxGasLevel)) && (pipe.TestForData() >= sizeof(newCustomer->FuelGrade))) {
+				if (pipe.TestForData()) {
+
+				//ps1.Wait();
+					//pipe.Read(&newCustomer->MaxGasLevel, sizeof(newCustomer->MaxGasLevel));
+					//pipe.Read(&newCustomer->FuelGrade, sizeof(newCustomer->FuelGrade));
+					//pipe.Read(&newCustomer->CreditCard, sizeof(newCustomer->CreditCard));
+					//cs1.Signal();
+					Full.Wait();
+					pipe.Read(&GasStr);
+					newCustomer->MaxGasLevel = std::stod(GasStr);
+					MaxGasLevel = newCustomer->MaxGasLevel;
+					pipe.Read(&FuelGradeStr);
+					newCustomer->FuelGrade = std::stoi(FuelGradeStr, nullptr, 10);
+					FuelGrade = newCustomer->FuelGrade;
+					pipe.Read(&CreditCardStr);
+					newCustomer->CreditCard = std::stoi(CreditCardStr, nullptr, 10);
+					pipe.Read(&CustomerName);
+
+					//printf("NEW CUSTOMER ARRIVED AT PUMP %s\n", PumpNumber.c_str());
 					newCustomer->newArrival = 1; 
 					while (newCustomer->Authorized != 1){
 						SLEEP(500);
 					}
-					printf("NEW CUSTOMER AUTHORIZED AT PUMP %d\n", PumpNumber);
+					//printf("NEW CUSTOMER AUTHORIZED AT PUMP %s\n", PumpNumber.c_str());
+					SetFuelGrade(newCustomer->FuelGrade);
 					FillGas(newCustomer->MaxGasLevel);
+					Print2Dos(0); // Print pump status to DOS
+					ExitSem.Signal();
+					Empty.Wait();
+					EntrySem.Signal();
 				}
 			}
 		}
 
-		StatusThread.WaitForThread();
 		return 0;
-	}
-
-	void CreateDataPool() {
-		if (PumpNumber == 1) {
-			CDataPool 		dp("pump1", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
-		}
-		else if (PumpNumber == 2) {
-			CDataPool 		dp("pump2", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
-		}
-		else if (PumpNumber == 3) {
-			CDataPool 		dp("pump3", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
-		}
-		else if (PumpNumber == 4) {
-			CDataPool 		dp("pump4", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
-		}
-		else {
-			printf("Could not create datapool");
-		}
 	}
 };
 

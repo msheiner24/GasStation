@@ -27,20 +27,17 @@ struct CustomerInfo {
 
 UINT __stdcall PumpComm(void *args)
 {
-	int c,i;
-	char str[4];
 	int PumpNumber = *(int *)(args);
 	std::string PumpName = std::to_string(PumpNumber);
-	char buffer[128];
-	std::string datapoolPref = "datapoolPump";
-	snprintf(buffer, sizeof(buffer), "%s%d", datapoolPref.c_str(), PumpNumber);
-	CDataPool 		dp(buffer, sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
 
+	CDataPool 		dp("dataPoolPump" + PumpNumber, sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
 	struct CustomerInfo 	 *pumpDataPool = (struct CustomerInfo *)(dp.LinkDataPool());
 
-
+	printf("Thread created to communicate with Pump %d", PumpNumber);
 	while (pumpDataPool->newArrival == 0) {
-		SLEEP(500);
+		printf("new arrival at pump %d:   %d", PumpNumber, pumpDataPool->newArrival);
+
+		SLEEP(2000);
 	}
 
 	if (pumpDataPool->newArrival == 1)
@@ -68,9 +65,6 @@ UINT __stdcall PumpComm(void *args)
 		SLEEP(3000);
 	}
 
-	// The CDatapool object 'dp' created at the start of the program will now be destroyed
-	// and provided there are no other processes using the same named datapool, then that datapool
-	// will also be destroyed
 
 	//getchar();			// pause seconds so programmer can view output before child dies
 
