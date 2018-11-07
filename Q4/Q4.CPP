@@ -27,55 +27,38 @@ struct CustomerInfo {
 
 UINT __stdcall PumpComm(void *args)
 {
-	
+	int c,i;
+	char str[4];
 	int PumpNumber = *(int *)(args);
 	std::string PumpName = std::to_string(PumpNumber);
-	/*std::string datapoolPref = "datapoolPump";
-	std::string dataPoolName = datapoolPref + PumpName;
-	cout << "Resultant String = " << dataPoolName;
-	*/
 	char buffer[128];
 	std::string datapoolPref = "datapoolPump";
 	snprintf(buffer, sizeof(buffer), "%s%d", datapoolPref.c_str(), PumpNumber);
-
-	CPipe	pipe(PumpName, 1024);			// Create a pipe to communicate with customer
-	printf("%.*s", 13, buffer);
-
-	//printf("attempting to create datapool %s", dataPoolName);
 	CDataPool 		dp(buffer, sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
-	printf("Child Thread Created to Communicate with Pump Number: %d\n", PumpNumber);
-	/*
-	CDataPool 		dp("pum", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
-	if (PumpNumber == 1) {
-		CDataPool 		dp("pump1", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
 
-	}
-	else if (PumpNumber == 2) {
-		CDataPool 		dp("pump2", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
-	}
-	else if (PumpNumber == 3) {
-		CDataPool 		dp("pump3", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
-	}
-	else if (PumpNumber == 4) {
-		CDataPool 		dp("pump4", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
-	}
-	else {
-		printf("Could not create datapool");
-	}*/
 	struct CustomerInfo 	 *pumpDataPool = (struct CustomerInfo *)(dp.LinkDataPool());
-	printf("GSC linked to datapool %d at address %p.....\n", PumpNumber, pumpDataPool);
 
-	printf("Child Read value %d for New Arrival From Pump Number %d\n", pumpDataPool->newArrival, PumpNumber);
 
 	while (pumpDataPool->newArrival == 0) {
 		SLEEP(500);
 	}
+
 	if (pumpDataPool->newArrival == 1)
 	{
+		printf("New Customer Arrived at Pump %d", PumpNumber);
 		printf("Child Read value %d for Credit Card From Pump Number %d\n", pumpDataPool->CreditCard, PumpNumber);
 		printf("Child Read value %d for FuelGrade Card From Pump Number %d\n", pumpDataPool->FuelGrade, PumpNumber);
 
 		if (pumpDataPool->MaxGasLevel < 70) {
+			while (GetAsyncKeyState(0x46) == 0)
+			{
+				SLEEP(500);
+			}
+			while (GetAsyncKeyState(VK_NUMPAD1) == 0)
+			{
+				SLEEP(500);
+			}
+			printf("f+1 entered, authorized pump 1");
 			pumpDataPool->Authorized = 1;
 		}
 	}
@@ -104,12 +87,10 @@ int   main()
 //	in it) but that shouldn't matter, since the program can just attempt to make it. If it already exists
 //	then it will simply use it. If it doesn't exist, then it will be created below
 
-
-	printf("Child attempting to create/use the datapool.....\n") ;
-	CDataPool 		pump1dp("pump1", sizeof(struct CustomerInfo)) ;
+	/*CDataPool 		pump1dp("pump1", sizeof(struct CustomerInfo)) ;
 	CDataPool 		pump2dp("pump1", sizeof(struct CustomerInfo));
 	CDataPool 		pump3dp("pump1", sizeof(struct CustomerInfo));
-	CDataPool 		pump4dp("pump1", sizeof(struct CustomerInfo));
+	CDataPool 		pump4dp("pump1", sizeof(struct CustomerInfo));*/
 
 	int Num[4] = { 1,2,3,4 };
 	CThread *Threads[4];
