@@ -19,20 +19,22 @@ class Pump : public ActiveClass
 	FuelTank *pTank;
 	int PumpNumber;
 	double MaxGas = 70.0;
-	double GasLevel = 0.0;
-	double Gas = 0;
-	double Bill = 0.0;
-	int FuelGrade = 87;
+	struct CustomerInfo {
+		double CurrentGasLevel = 0.0;
+		double MaxGasLevel = 0;
+		double Bill = 0.0;
+		int FuelGrade = 87;
+		int CreditCard = 0;
+	};
 	int State = 0;
 	double Price = 0.0;
-	int CreditCard = 0;
 
 public:
 	Pump(int _PumpNumber, FuelTank &Tank);
 	Pump();
 	~Pump();
-	void SetFuelGrade();
-	void FillGas();
+	void SetFuelGrade(int FuelGrade);
+	void FillGas(double Gas);
 
 private:
 
@@ -45,7 +47,8 @@ private:
 
 		for (int i = 0; i < 10000; i++) {
 			if (State == 1)
-				printf("Pump %d is currently filling. Gas Level is at %f litres \n", PumpNumber, GasLevel);
+				//printf("Pump %d is currently filling. Gas Level is at %f litres \n", PumpNumber, newCustomer->CurrentGasLevel);
+				printf("Pump %d is currently filling", PumpNumber);
 			else {
 				printf("Pump %d is currently off \n", PumpNumber);
 			}
@@ -56,43 +59,68 @@ private:
 
 	int main(void) {
 		std::string PumpName = std::to_string(PumpNumber);
-		CPipe	pipe(PumpName, 1024);		// Create a pipe 'p1' with the name "MyPipe2"
+
+		CPipe	pipe(PumpName, 1024);			// Create a pipe to communicate with customer
+		CDataPool 		dp("pump1", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+
+		CreateDataPool();
 		CSemaphore		ps1(PumpName, 0, 1);    // semaphore with initial value 0 and max value 1
 		CSemaphore		cs1(PumpName, 1, 1);    // semaphore with initial value 1 and max value 1
 		CRendezvous     rvPump("rvPump", 4);		// Attempt to create a rendezvous object involving 4 threads
 		cs1.Signal();
 		rvPump.Wait();
+
+		struct CustomerInfo 	 *newCustomer = (struct CustomerInfo *)(dp.LinkDataPool());
+		
 		ClassThread<Pump> StatusThread(this, &Pump::PumpStatus, ACTIVE, NULL);
 		for (int i = 0; i < 10000; i++) {
 			if (State == 1) {
-				if (GasLevel < Gas) {
-					GasLevel += 0.5;
-					pTank->WithdrawFuel(0.5, FuelGrade);
-					pTank->PrintTankLevel(FuelGrade);
+				if (newCustomer->CurrentGasLevel < newCustomer->MaxGasLevel) {
+					newCustomer->CurrentGasLevel += 0.5;
+					pTank->WithdrawFuel(0.5, newCustomer->FuelGrade);
+					pTank->PrintTankLevel(newCustomer->FuelGrade);
 					SLEEP(1000);
 				}
 				else {
-					Bill = Price * Gas;
-					printf("Pump %d finished filling to %f litres. Bill is $ %f\n", PumpNumber, Gas, Bill);
+					newCustomer->Bill = Price * newCustomer->MaxGasLevel;
+					printf("Pump %d finished filling to %f litres. Bill is $ %f\n", PumpNumber, newCustomer->MaxGasLevel, newCustomer->Bill);
 					State = 0;
 				}
 			}
 			else {			
-				if ((pipe.TestForData() >= sizeof(Gas)) && (pipe.TestForData() >= sizeof(FuelGrade))) {
+				if ((pipe.TestForData() >= sizeof(newCustomer->MaxGasLevel)) && (pipe.TestForData() >= sizeof(newCustomer->FuelGrade))) {
 					ps1.Wait();
-					pipe.Read(&Gas, sizeof(Gas));
-					pipe.Read(&FuelGrade, sizeof(FuelGrade));
-					pipe.Read(&CreditCard, sizeof(CreditCard));
-					printf("Recieved a new customer at Pump %d. Credit Card %d has been authorized\n", PumpNumber, CreditCard);
-					SetFuelGrade();
+					pipe.Read(&newCustomer->MaxGasLevel, sizeof(newCustomer->MaxGasLevel));
+					pipe.Read(&newCustomer->FuelGrade, sizeof(newCustomer->FuelGrade));
+					pipe.Read(&newCustomer->CreditCard, sizeof(newCustomer->CreditCard));
+					printf("Recieved a new customer at Pump %d. Credit Card %d has been authorized\n", PumpNumber, newCustomer->CreditCard);
+					SetFuelGrade(newCustomer->FuelGrade);
 					cs1.Signal();
-					FillGas();
+					FillGas(newCustomer->MaxGasLevel);
 				}
 			}
 		}
 
 		StatusThread.WaitForThread();
 		return 0;
+	}
+
+	void CreateDataPool() {
+		if (PumpNumber == 1) {
+			CDataPool 		dp("pump1", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+		}
+		else if (PumpNumber == 2) {
+			CDataPool 		dp("pump2", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+		}
+		else if (PumpNumber == 3) {
+			CDataPool 		dp("pump3", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+		}
+		else if (PumpNumber == 4) {
+			CDataPool 		dp("pump4", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+		}
+		else {
+			printf("Could not create datapool");
+		}
 	}
 };
 

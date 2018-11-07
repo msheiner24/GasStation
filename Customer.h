@@ -21,7 +21,7 @@ class Customer : public ActiveClass
 	int FuelGrade;
 
 public:
-	Customer(int _PumpNumber, int _CreditCard, double _Gas, int _FuelType);
+	Customer(int _PumpNumber, int _CreditCard, double _Gas, int _FuelGrade);
 	Customer();
 	~Customer();
 

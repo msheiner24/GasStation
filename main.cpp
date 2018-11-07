@@ -14,6 +14,8 @@ struct 	mydatapooldata {
 
 int main()
 {
+
+
 	Customer Customer1(1, 721891, 9, 87);
 	Customer Customer2(2, 182901, 5, 89);
 	Customer Customer3(1, 491891, 35, 91);
@@ -27,7 +29,11 @@ int main()
 
 	Pump  Pump1(1, *pTank1), Pump2(2, *pTank2), Pump3(3, *pTank3), Pump4(4, *pTank4);
 
-
+	CProcess gsc(".\\Q4\\debug\\q4.exe",	// pathlist to child program executable
+		NORMAL_PRIORITY_CLASS,			// priority
+		OWN_WINDOW,						// process has its own window
+		ACTIVE							// process is active immediately
+	);
 
 	Customer1.Resume();
 	Customer2.Resume();
@@ -46,6 +52,8 @@ int main()
 	Customer1.WaitForThread();
 	Customer2.WaitForThread();
 	Customer3.WaitForThread();
+
+	gsc.WaitForProcess();
 	
 	return 0;
 }

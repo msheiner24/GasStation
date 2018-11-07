@@ -134,6 +134,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Customer.h" />
+    <ClInclude Include="FuelTank.h" />
     <ClInclude Include="Pump.h" />
     <ClInclude Include="rt.h" />
   </ItemGroup>

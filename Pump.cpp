@@ -28,7 +28,7 @@ Pump::~Pump()
 }
 
 
-void Pump::SetFuelGrade() 	// call default base class constructor 
+void Pump::SetFuelGrade(int FuelGrade) 	// call default base class constructor 
 {
 	if (FuelGrade == 89) {
 		printf("MID-GRADE UNLEADED fuel grade (89) selected for Pump %d. Price is 1.30 cents/litre. \n", PumpNumber);
@@ -49,16 +49,10 @@ void Pump::SetFuelGrade() 	// call default base class constructor
 }
 
 
-void Pump::FillGas() 	// call default base class constructor 
+void Pump::FillGas(double Gas) 	
 {
-	if (Gas > MaxGas) {
-		printf("You have entered a value larger than the maximum fill amount of 70 litres\n");
-		Gas = MaxGas;
-	}
 	printf("Filling Pump %d to %f litres\n", PumpNumber, Gas);
 	State = 1;
-	GasLevel = 0;
-	Bill = 0;
 }
 
 
