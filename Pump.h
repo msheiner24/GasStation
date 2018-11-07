@@ -4,6 +4,7 @@
 */
 #pragma once
 #include <stdio.h>
+#include <string>
 #include "rt.h"	
 #include "FuelTank.h"
 
@@ -25,6 +26,8 @@ class Pump : public ActiveClass
 		double Bill = 0.0;
 		int FuelGrade = 87;
 		int CreditCard = 0;
+		bool Authorized = 0;
+		bool newArrival = 0;
 	};
 	int State = 0;
 	double Price = 0.0;
@@ -52,18 +55,43 @@ private:
 			else {
 				printf("Pump %d is currently off \n", PumpNumber);
 			}
-			SLEEP(1000);
+			SLEEP(2000);
 		}
 		return 0;									// thread ends here
 	}
 
 	int main(void) {
 		std::string PumpName = std::to_string(PumpNumber);
-
+		/*std::string datapoolPref = "datapoolPump";
+		std::string dataPoolName = datapoolPref + PumpName;
+		*/
+		char buffer[128];
+		std::string datapoolPref = "datapoolPump";
+		snprintf(buffer, sizeof(buffer), "%s%d", datapoolPref.c_str(), PumpNumber);
+		
 		CPipe	pipe(PumpName, 1024);			// Create a pipe to communicate with customer
-		CDataPool 		dp("pump1", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+		printf("%.*s", 13, buffer);
 
-		CreateDataPool();
+		//printf("attempting to create datapool %s", buffer);
+
+		CDataPool 		dp(buffer, sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+
+		/*CreateDataPool();
+		if (PumpNumber == 1) {
+			CDataPool 		dp("pump1", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+		}
+		else if (PumpNumber == 2) {
+			CDataPool 		dp("pump2", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+		}
+		else if (PumpNumber == 3) {
+			CDataPool 		dp("pump3", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+		}
+		else if (PumpNumber == 4) {
+			CDataPool 		dp("pump4", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+		}
+		else {
+			CDataPool 		dp("pump4", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+		}*/
 		CSemaphore		ps1(PumpName, 0, 1);    // semaphore with initial value 0 and max value 1
 		CSemaphore		cs1(PumpName, 1, 1);    // semaphore with initial value 1 and max value 1
 		CRendezvous     rvPump("rvPump", 4);		// Attempt to create a rendezvous object involving 4 threads
@@ -71,7 +99,10 @@ private:
 		rvPump.Wait();
 
 		struct CustomerInfo 	 *newCustomer = (struct CustomerInfo *)(dp.LinkDataPool());
-		
+		printf("GSC linked to datapool %d at address %p.....\n", PumpNumber, newCustomer);
+
+		newCustomer->newArrival = 0;
+		newCustomer->Authorized = 0;
 		ClassThread<Pump> StatusThread(this, &Pump::PumpStatus, ACTIVE, NULL);
 		for (int i = 0; i < 10000; i++) {
 			if (State == 1) {
@@ -84,6 +115,8 @@ private:
 				else {
 					newCustomer->Bill = Price * newCustomer->MaxGasLevel;
 					printf("Pump %d finished filling to %f litres. Bill is $ %f\n", PumpNumber, newCustomer->MaxGasLevel, newCustomer->Bill);
+					newCustomer->Authorized = 0;
+					newCustomer->newArrival = 0;
 					State = 0;
 				}
 			}
@@ -93,9 +126,14 @@ private:
 					pipe.Read(&newCustomer->MaxGasLevel, sizeof(newCustomer->MaxGasLevel));
 					pipe.Read(&newCustomer->FuelGrade, sizeof(newCustomer->FuelGrade));
 					pipe.Read(&newCustomer->CreditCard, sizeof(newCustomer->CreditCard));
-					printf("Recieved a new customer at Pump %d. Credit Card %d has been authorized\n", PumpNumber, newCustomer->CreditCard);
 					SetFuelGrade(newCustomer->FuelGrade);
 					cs1.Signal();
+					printf("NEW CUSTOMER ARRIVED AT PUMP %d\n", PumpNumber);
+					newCustomer->newArrival = 1; 
+					while (newCustomer->Authorized != 1){
+						SLEEP(500);
+					}
+					printf("NEW CUSTOMER AUTHORIZED AT PUMP %d\n", PumpNumber);
 					FillGas(newCustomer->MaxGasLevel);
 				}
 			}

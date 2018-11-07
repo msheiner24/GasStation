@@ -3,7 +3,9 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include 	<stdio.h>
+#include	<string>
 #include 	"Z:\RTExamples\rt.h"		// change pathlist to "rt.h" file to suit location on disk
+
 
 //
 //	It's important to realise that all processes accessing the same datapool must
@@ -19,16 +21,34 @@ struct CustomerInfo {
 	double Bill = 0.0;
 	int FuelGrade = 87;
 	int CreditCard = 0;
+	bool Authorized = 0;
+	bool newArrival = 0;
 };
 
 UINT __stdcall PumpComm(void *args)
 {
 	
 	int PumpNumber = *(int *)(args);
-	printf("Child Thread Created to Communicate with Pump Number: %d", PumpNumber);
-	CDataPool 		dp("pump1", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+	std::string PumpName = std::to_string(PumpNumber);
+	/*std::string datapoolPref = "datapoolPump";
+	std::string dataPoolName = datapoolPref + PumpName;
+	cout << "Resultant String = " << dataPoolName;
+	*/
+	char buffer[128];
+	std::string datapoolPref = "datapoolPump";
+	snprintf(buffer, sizeof(buffer), "%s%d", datapoolPref.c_str(), PumpNumber);
+
+	CPipe	pipe(PumpName, 1024);			// Create a pipe to communicate with customer
+	printf("%.*s", 13, buffer);
+
+	//printf("attempting to create datapool %s", dataPoolName);
+	CDataPool 		dp(buffer, sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+	printf("Child Thread Created to Communicate with Pump Number: %d\n", PumpNumber);
+	/*
+	CDataPool 		dp("pum", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
 	if (PumpNumber == 1) {
 		CDataPool 		dp("pump1", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+
 	}
 	else if (PumpNumber == 2) {
 		CDataPool 		dp("pump2", sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
@@ -41,15 +61,29 @@ UINT __stdcall PumpComm(void *args)
 	}
 	else {
 		printf("Could not create datapool");
-	}
+	}*/
 	struct CustomerInfo 	 *pumpDataPool = (struct CustomerInfo *)(dp.LinkDataPool());
+	printf("GSC linked to datapool %d at address %p.....\n", PumpNumber, pumpDataPool);
 
+	printf("Child Read value %d for New Arrival From Pump Number %d\n", pumpDataPool->newArrival, PumpNumber);
 
-	//printf("Child Thread.....\n");
-	printf("Child Read value %d for Credit Card From Pump Number %d\n", pumpDataPool->CreditCard, PumpNumber);
-	printf("Child Read value %d for FuelGrade Card From Pump Number %d\n", pumpDataPool->FuelGrade, PumpNumber);
+	while (pumpDataPool->newArrival == 0) {
+		SLEEP(500);
+	}
+	if (pumpDataPool->newArrival == 1)
+	{
+		printf("Child Read value %d for Credit Card From Pump Number %d\n", pumpDataPool->CreditCard, PumpNumber);
+		printf("Child Read value %d for FuelGrade Card From Pump Number %d\n", pumpDataPool->FuelGrade, PumpNumber);
 
-
+		if (pumpDataPool->MaxGasLevel < 70) {
+			pumpDataPool->Authorized = 1;
+		}
+	}
+	while (pumpDataPool->newArrival == 1)
+	{
+		printf("Pump %d is currently filling. Gas Level is at %f litres \n", PumpNumber, pumpDataPool->CurrentGasLevel);
+		SLEEP(3000);
+	}
 
 	// The CDatapool object 'dp' created at the start of the program will now be destroyed
 	// and provided there are no other processes using the same named datapool, then that datapool
