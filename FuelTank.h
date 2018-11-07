@@ -13,15 +13,16 @@ private:
 	double tankLevel91;
 	double tankLevel93;
 	int tankNumber;
+	string tankName;
 	CMutex	*theMutex;	// a pointer to a hidden mutex protecting the ‘tankLevel’ variable above
-	/*struct tankDataPool {
+	
+	struct tankDataPool {
+		int tankNumber;
 		double tankLevel87;
 		double tankLevel89;
 		double tankLevel91;
 		double tankLevel93;
-	};*/
-
-
+	};
 
 
 public:
@@ -29,6 +30,7 @@ public:
 	{ 
 		theMutex -> Wait() ;
 		BOOL Status;
+
 		switch (FuelGrade) {
 		case 87:
 			if (tankLevel87 >= amount) {
@@ -64,6 +66,7 @@ public:
 		}
 
 		theMutex -> Signal() ;
+		updateDataPool();
 		return Status ;
 	} 
 
@@ -109,6 +112,7 @@ public:
 			break;
 		}
 		theMutex -> Signal() ;
+		updateDataPool();
 	}  
 	
 	void PrintTankLevel(int FuelGrade)
@@ -135,21 +139,33 @@ public:
 		theMutex -> Signal() ;
 	}
 
+	void updateDataPool(){
+		CDataPool 		dp("dataPoolTank" + tankName, sizeof(struct tankDataPool));	// Create a datapool to communicate with gsc
+		struct tankDataPool 	 *tankInfo = (struct tankDataPool *)(dp.LinkDataPool());
+
+		tankInfo->tankNumber  = tankNumber;
+		tankInfo->tankLevel87 = tankLevel87;
+		tankInfo->tankLevel89 = tankLevel89;
+		tankInfo->tankLevel91 = tankLevel91;
+		tankInfo->tankLevel93 = tankLevel93;
+	}
+
 
 	// constructor and destructor
 	FuelTank (int _tankNumber) 
-	{ 
-		
+	{ 		
 		tankNumber = _tankNumber;
-		//CDataPool 		dp("dataPoolTank" + tankNumber, sizeof(struct tankDataPool));	// Create a datapool to communicate with gsc
-		//struct tankDataPool 	 *tankInfo = (struct tankDataPool *)(dp.LinkDataPool());
+		tankName = std::to_string(tankNumber);
+
+		CDataPool 		dp("dataPoolTank" + tankName, sizeof(struct tankDataPool));	// Create a datapool to communicate with gsc
+		struct tankDataPool 	 *tankInfo = (struct tankDataPool *)(dp.LinkDataPool());
 
 		theMutex = new CMutex ("MyFuelTank") ; 
 		theMutex->Wait();
-		tankLevel87 = 500.0;
-		tankLevel89 = 500.0;
-		tankLevel91 = 500.0;
-		tankLevel93 = 500.0;
+		tankInfo -> tankLevel87 = 500.0;
+		tankInfo->tankLevel89 = 500.0;
+		tankInfo->tankLevel91 = 500.0;
+		tankInfo->tankLevel93 = 500.0;
 		theMutex->Signal();
 	}
 
