@@ -28,6 +28,7 @@ struct CustomerInfo {
 UINT __stdcall PumpComm(void *args)
 {
 	int PumpNumber = *(int *)(args);
+	int key;
 	std::string PumpName = std::to_string(PumpNumber);
 
 	CDataPool 		dp("dataPoolPump" + PumpName , sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
@@ -52,11 +53,23 @@ UINT __stdcall PumpComm(void *args)
 			{
 				SLEEP(500);
 			}
-			while (GetAsyncKeyState(VK_NUMPAD1) == 0)
+			if (PumpNumber == 1) {
+				key = 0x31;
+			}
+			else if (PumpNumber == 2) {
+				key = 0x32;
+			}
+			else if (PumpNumber == 3) {
+				key = 0x33;
+			}
+			else {
+				key = 0x34;
+			}
+			while (GetAsyncKeyState(key) == 0)
 			{
 				SLEEP(500);
 			}
-			printf("f+1 entered, authorized pump 1");
+			printf("authorized pump %d", PumpNumber);
 			pumpDataPool->Authorized = 1;
 		}
 	}
