@@ -43,6 +43,7 @@ class Pump : public ActiveClass
 	string CreditCardStr;
 	string FuelGradeStr;
 	string GasStr;
+	CMutex	*M; // mutex to protect DOS window
 	
 public:
 	Pump(string _PumpNumber, FuelTank &Tank);
@@ -51,12 +52,14 @@ public:
 	void SetFuelGrade(int FuelGrade);
 	void FillGas(double Gas);
 	void Print2Dos(int pump_state);
+	void CustomerArrival();
+	void CustomerAuthorized();
+	void CustomerDeparture();
 
 private:
 
 	int main(void) {
 		//Initialize pipes, semaphores , datapools, structs
-		CMutex M("DOSMutex"); // mutex to protect DOS window
 		CTypedPipe <string> pipe(PumpNumber, 4);
 		CSemaphore EntrySem(("entry" + PumpNumber), 0, 1);
 		CSemaphore ExitSem(("exit" + PumpNumber), 0, 1);
@@ -70,13 +73,16 @@ private:
 		// calculate Y cursor value
 		CursorY = std::stoi(PumpNumber, nullptr, 10);
 		CursorY = (6 * (CursorY - 1));
-		// print status in default state (off)
-		M.Wait();
+		// Print pump name to DOS
+		M->Wait();
+		MOVE_CURSOR(0, CursorY);             // move cursor to cords [x,y]
+		printf("Pump %s", PumpNumber.c_str());
+		fflush(stdout);		      	// force output to be written to screen
 		MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
 		printf("\33[2K");
-		printf("Pump off.\n");
+		printf("Pump off.\n"); // print status in default state (off)
 		fflush(stdout);
-		M.Signal();
+		M->Signal();
 		Print2Dos(1); // Print pump status to DOS
 
 		EntrySem.Signal();
@@ -111,28 +117,7 @@ private:
 					State = 0;
 					Print2Dos(0); // Print pump status to DOS
 					// Simulate Customer leaving pump
-					M.Wait();
-					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
-					printf("\33[2K");
-					printf("Finished filling. Returning hose to pump...\n");
-					fflush(stdout);
-					M.Signal();
-					SLEEP(3000);
-					M.Wait();
-					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
-					printf("\33[2K");
-					printf("Customer %s leaving pump...\n", CustomerName.c_str());
-					fflush(stdout);
-					M.Signal();
-					SLEEP(3000);
-					Print2Dos(1); // Print pump status to DOS
-					M.Wait();
-					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
-					printf("\33[2K");
-					printf("Pump off.\n");
-					fflush(stdout);
-					M.Signal();
-					SLEEP(3000);
+					CustomerDeparture();
 				}
 			}
 			else {			
@@ -150,6 +135,9 @@ private:
 					Empty.Wait();
 					EntrySem.Signal();
 
+					// Simulate Customer arriving to pump
+					CustomerArrival();
+
 					//CStatus.Wait();
 					newCustomer->MaxGasLevel = MaxGasLevel;
 					newCustomer->FuelGrade = FuelGrade;
@@ -157,67 +145,15 @@ private:
 					newCustomer->newArrival = 1;
 					//PStatus.Signal();
 
-					//printf("NEW CUSTOMER ARRIVED AT PUMP %s\n", PumpNumber.c_str());
-					//newCustomer->newArrival = 1; 
-					while (newCustomer->Authorized != 1){
+					// Wait for authorization from gas station attendant
+					while (newCustomer->Authorized != 1) {
 						SLEEP(500);
 					}
-					//printf("NEW CUSTOMER AUTHORIZED AT PUMP %s\n", PumpNumber.c_str());
-					SetFuelGrade(newCustomer->FuelGrade);
-					FillGas(newCustomer->MaxGasLevel);
-					Print2Dos(0); // Print pump status to DOS
+					// Simulate Customer authorization
+					CustomerAuthorized();
 
-					// Simulate Customer arriving to pump
-					M.Wait();
-					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
-					printf("\33[2K");
-					printf("Customer %s arrived at pump...\n", CustomerName.c_str());
-					fflush(stdout);
-					M.Signal();
-					SLEEP(3000);
-					M.Wait();
-					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
-					printf("\33[2K");
-					printf("Swiping credit card...\n");
-					fflush(stdout);
-					M.Signal();
-					SLEEP(3000);
-
-					while (newCustomer->Authorized != 1){
-						SLEEP(500);
-					}
-
-					M.Wait();
-					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
-					printf("\33[2K");
-					printf("Card authorized...\n");
-					fflush(stdout);
-					M.Signal();
-					SLEEP(1000);
-					M.Wait();
-					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
-					printf("\33[2K");
-					printf("Removing gas pump...\n");
-					fflush(stdout);
-					M.Signal();
-					SLEEP(3000);
-
-					// Set fuel grade and start dispensing
 					SetFuelGrade(FuelGrade);
 					FillGas(MaxGasLevel);
-					M.Wait();
-					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
-					printf("\33[2K");
-					printf("Selected fuel grade %d (%s)...\n", FuelGrade, FuelGradeType.c_str());
-					fflush(stdout);
-					M.Signal();
-					SLEEP(3000);
-					M.Wait();
-					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
-					printf("\33[2K");
-					printf("Pump on. Dispensing Fuel...\n");
-					fflush(stdout);
-					M.Signal();
 					Print2Dos(0); // Print pump status to DOS
 				}
 			}
