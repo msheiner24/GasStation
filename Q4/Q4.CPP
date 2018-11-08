@@ -218,11 +218,57 @@ UINT __stdcall TankComm(void *args)
 	CDataPool 		dp2("dataPoolTank"+TankName , sizeof(struct tankDataPool));	// Create a datapool to communicate with gsc
 	struct tankDataPool 	 *tankDataPool = (struct tankDataPool *)(dp2.LinkDataPool());
 	CMutex M("DOSMutex2");
-	int CursorY;
+	CMutex F("MyFuelTank");
 	//CursorY = std::stoi(TankName, nullptr, 10);
-	CursorY = TankNumber;
-	CursorY = (6 * (CursorY - 1));
-
+	int CursorY = (6 * (TankNumber - 1)) + 30; // calculate Y cursor value
+	M.Wait();
+	MOVE_CURSOR(0, CursorY);             // move cursor to cords [x,y]
+	printf("Tank %d", TankNumber);
+	fflush(stdout);		      	// force output to be written to screen
+	M.Signal();
+	std::string fill;
+	while (1) {			
+		// Print default pump info
+		M.Wait();
+		MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
+		printf("\33[2K");
+		printf("\rREGULAR UNLEADED: %f\n", tankDataPool->tankLevel87);
+		fflush(stdout);		      	// force output to be written to screen
+		MOVE_CURSOR(0, CursorY + 2);             // move cursor to cords [x,y]
+		printf("\33[2K");
+		printf("\rMID-GRADE UNLEADED: %f\n", tankDataPool->tankLevel89);
+		fflush(stdout);		      	// force output to be written to screen
+		MOVE_CURSOR(0, CursorY + 3);             // move cursor to cords [x,y]
+		printf("\33[2K");
+		printf("\rPREMIUM UNLEADED: %f\n", tankDataPool->tankLevel91);
+		fflush(stdout);		      	// force output to be written to screen
+		MOVE_CURSOR(0, CursorY + 4);             // move cursor to cords [x,y]
+		printf("\33[2K");
+		printf("\rRSUPER PREMIUM UNLEADED: %f\n", tankDataPool->tankLevel93);
+		fflush(stdout);		      	// force output to be written to screen
+		M.Signal();	
+		SLEEP(2000);
+		
+		M.Wait();
+		MOVE_CURSOR(0, 55);             // move cursor to cords [x,y]
+		printf("Type f to fill a pump\n");
+		fflush(stdout);		      	// force output to be written to screen
+		MOVE_CURSOR(0, 56);             // move cursor to cords [x,y]
+		cin >> fill;
+		if (fill.compare("f")==0){
+			printf("Which tank would you like to fill?\n");
+			fflush(stdout);		      	// force output to be written to screen
+			MOVE_CURSOR(0, 57);
+			cin >> fill;
+			fflush(stdout);
+			int tank2fill = std::stoi(fill, nullptr, 10);
+			MOVE_CURSOR(0, 58);
+			printf("filling tank %d\n", tank2fill);
+			fflush(stdout);
+			fill = "0";
+		}
+		M.Signal();
+	}
 	//printf("Fuel grade 87 remaining at tank #%d:   %f\n", TankNumber, tankDataPool->tankLevel87);
 	//printf("Fuel grade 89 remaining at tank #%d:   %f\n", TankNumber, tankDataPool->tankLevel89);
 	//CMutex M("DOSMutex2"); // mutex to protect DOS window
@@ -233,59 +279,6 @@ UINT __stdcall TankComm(void *args)
 	//	SLEEP(1000);
 	//}
 
-	// Print pump name to DOS
-	//M.Wait();
-	//MOVE_CURSOR(0, CursorY);             // move cursor to cords [x,y]
-	//printf("Pump %s", TankName.c_str());
-	//fflush(stdout);		      	// force output to be written to screen
-	//if (pump_state) {
-	//	MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
-	//	printf("Tank Number:\n");
-	//	fflush(stdout);		      	// force output to be written to screen
-	//	MOVE_CURSOR(0, CursorY + 2);             // move cursor to cords [x,y]
-	//	printf("Regular Unleaded Fuel Remaining (87):\n");
-	//	fflush(stdout);		      	// force output to be written to screen
-	//	MOVE_CURSOR(0, CursorY + 3);             // move cursor to cords [x,y]
-	//	printf("Mid-Grade Unleaded Fuel Remaining (87):\n");
-	//	fflush(stdout);		      	// force output to be written to screen
-	//	MOVE_CURSOR(0, CursorY + 4);             // move cursor to cords [x,y]
-	//	printf("Premium Unleaded Fuel Remaining (87):\n");
-	//	fflush(stdout);		      	// force output to be written to screen
-	//	MOVE_CURSOR(0, CursorY + 5);             // move cursor to cords [x,y]
-	//	printf("Super Premium Unleaded Fuel Remaining:\n");
-	//	fflush(stdout);		      	// force output to be written to screen
-	//
-	//}
-	//while(1) {
-	//	MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
-	//	printf("Tank Number: %s\n", TankName.c_str());
-	//	fflush(stdout);		      	// force output to be written to screen
-	//	MOVE_CURSOR(0, CursorY + 2);             // move cursor to cords [x,y]
-	//	printf("Regular Unleaded Fuel Remaining (87): %f\n", tankInfo->tankLevel87);
-	//	fflush(stdout);		      	// force output to be written to screen
-	//	MOVE_CURSOR(0, CursorY + 3);             // move cursor to cords [x,y]
-	//	printf("Mid - Grade Unleaded Fuel Remaining(89): %f\n", tankInfo->tankLevel89);
-	//	fflush(stdout);		      	// force output to be written to screen
-	//	MOVE_CURSOR(0, CursorY + 4);             // move cursor to cords [x,y]
-	//	printf("Premium Unleaded Fuel Remaining (91): %f\n", tankInfo->tankLevel91);
-	//	fflush(stdout);		      	// force output to be written to screen
-	//	MOVE_CURSOR(0, CursorY + 5);             // move cursor to cords [x,y]
-	//	printf("Super Premium Unleaded Fuel Remaining (93): %f\n", tankInfo->tankLevel93);
-	//	fflush(stdout);		      	// force output to be written to screen
-	//	MOVE_CURSOR(0, CursorY + 6);             // move cursor to cords [x,y]
-	//	if (State)
-	//		printf("Pump Status: Filling\n");
-	//	else
-	//		printf("Pump Status: Off    \n");
-	//	fflush(stdout);		      	// force output to be written to screen
-	//	MOVE_CURSOR(40, CursorY + 3);             // move cursor to cords [x,y]
-	//	printf("Fill Level: %.2f Litres\n", CurrentGasLevel);
-	//	fflush(stdout);		      	// force output to be written to screen
-	//	MOVE_CURSOR(40, CursorY + 4);             // move cursor to cords [x,y]
-	//	printf("Bill: $%.2f\n", Bill);
-	//	fflush(stdout);		      	// force output to be written to screen
-	//}
-	//M.Signal();
 	return 0;
 }			
 
