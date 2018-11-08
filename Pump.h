@@ -62,6 +62,8 @@ private:
 		CSemaphore ExitSem(("exit" + PumpNumber), 0, 1);
 		CSemaphore Full(("full" + PumpNumber), 0, 1);
 		CSemaphore Empty(("empty" + PumpNumber), 0, 1);
+		CSemaphore PStatus(("Producer" + PumpNumber), 1);
+		CSemaphore CStatus(("Consumer" + PumpNumber), 1);
 		CDataPool 		dp("dataPoolPump" + PumpNumber, sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
 		CRendezvous     rvPump("rvPump", 4);		// Attempt to create a rendezvous object involving 4 threads
 		struct CustomerInfo 	 *newCustomer = (struct CustomerInfo *)(dp.LinkDataPool());
@@ -79,15 +81,19 @@ private:
 
 		EntrySem.Signal();
 		rvPump.Wait();
+		CStatus.Wait();
 		newCustomer->newArrival = 0;
 		newCustomer->Authorized = 0;
 		newCustomer->CreditCard = 1111;
+		PStatus.Signal();
 		while (1) {
 			if (State == 1) {
-				if (newCustomer->CurrentGasLevel < newCustomer->MaxGasLevel) {
-					newCustomer->CurrentGasLevel += 0.5;
-					CurrentGasLevel = newCustomer->CurrentGasLevel;
-					pTank->WithdrawFuel(0.5, newCustomer->FuelGrade);
+				if (CurrentGasLevel < MaxGasLevel) {
+					CurrentGasLevel += 0.5;
+					CStatus.Wait();
+					newCustomer->CurrentGasLevel = CurrentGasLevel;
+					PStatus.Signal();
+					pTank->WithdrawFuel(0.5, FuelGrade);
 					//pTank->PrintTankLevel(newCustomer->FuelGrade);
 					Bill = Price * CurrentGasLevel;
 					Print2Dos(0); // Print pump status to DOS
@@ -95,10 +101,12 @@ private:
 
 				}
 				else {
-					newCustomer->Bill = Price * newCustomer->MaxGasLevel;
+					Bill = Price * CurrentGasLevel;
+					CStatus.Wait();
+					newCustomer->Bill = Bill;
 					newCustomer->Authorized = 0;
 					newCustomer->newArrival = 0;
-					Bill = Price * CurrentGasLevel;
+					PStatus.Signal();
 					State = 0;
 					Print2Dos(0); // Print pump status to DOS
 					// Simulate Customer leaving pump
@@ -132,21 +140,22 @@ private:
 					// Read data from customer-pump pipeline
 					Full.Wait();
 					pipe.Read(&GasStr);
-					newCustomer->MaxGasLevel = std::stod(GasStr);
-					MaxGasLevel = newCustomer->MaxGasLevel;
+					MaxGasLevel = std::stod(GasStr);
 					pipe.Read(&FuelGradeStr);
-					newCustomer->FuelGrade = std::stoi(FuelGradeStr, nullptr, 10);
-					FuelGrade = newCustomer->FuelGrade;
+					FuelGrade = std::stoi(FuelGradeStr, nullptr, 10);
 					pipe.Read(&CreditCardStr);
-					newCustomer->CreditCard = std::stoi(CreditCardStr, nullptr, 10);
-					CreditCard = newCustomer->CreditCard;
+					CreditCard = std::stoi(CreditCardStr, nullptr, 10);
 					pipe.Read(&CustomerName);
 					ExitSem.Signal();
 					Empty.Wait();
 					EntrySem.Signal();
-
-					// Simulate Customer arriving to pump
+					CStatus.Wait();
+					newCustomer->MaxGasLevel = MaxGasLevel;
+					newCustomer->FuelGrade = FuelGrade;
+					newCustomer->CreditCard = CreditCard;
 					newCustomer->newArrival = 1;
+					PStatus.Signal();
+					// Simulate Customer arriving to pump
 					M.Wait();
 					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
 					printf("\33[2K");
@@ -165,6 +174,7 @@ private:
 					while (newCustomer->Authorized != 1){
 						SLEEP(500);
 					}
+
 					M.Wait();
 					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
 					printf("\33[2K");
@@ -181,8 +191,8 @@ private:
 					SLEEP(3000);
 
 					// Set fuel grade and start dispensing
-					SetFuelGrade(newCustomer->FuelGrade);
-					FillGas(newCustomer->MaxGasLevel);
+					SetFuelGrade(FuelGrade);
+					FillGas(MaxGasLevel);
 					M.Wait();
 					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
 					printf("\33[2K");
