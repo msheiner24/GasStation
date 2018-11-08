@@ -78,14 +78,13 @@ private:
 
 		newCustomer->newArrival = 0;
 		newCustomer->Authorized = 0;
-		newCustomer->CreditCard = 1111;
 		for (int i = 0; i < 10000; i++) {
 			if (State == 1) {
 				if (newCustomer->CurrentGasLevel < newCustomer->MaxGasLevel) {
 					newCustomer->CurrentGasLevel += 0.5;
 					CurrentGasLevel = newCustomer->CurrentGasLevel;
 					pTank->WithdrawFuel(0.5, newCustomer->FuelGrade);
-					pTank->PrintTankLevel(newCustomer->FuelGrade);
+					//pTank->PrintTankLevel(newCustomer->FuelGrade);
 					Print2Dos(0); // Print pump status to DOS
 					SLEEP(1000);
 				}
@@ -97,14 +96,7 @@ private:
 				}
 			}
 			else {			
-				//if ((pipe.TestForData() >= sizeof(newCustomer->MaxGasLevel)) && (pipe.TestForData() >= sizeof(newCustomer->FuelGrade))) {
 				if (pipe.TestForData()) {
-
-				//ps1.Wait();
-					//pipe.Read(&newCustomer->MaxGasLevel, sizeof(newCustomer->MaxGasLevel));
-					//pipe.Read(&newCustomer->FuelGrade, sizeof(newCustomer->FuelGrade));
-					//pipe.Read(&newCustomer->CreditCard, sizeof(newCustomer->CreditCard));
-					//cs1.Signal();
 					newCustomer->newArrival = 1;
 
 					Full.Wait();
@@ -120,12 +112,12 @@ private:
 					ExitSem.Signal();
 					Empty.Wait();
 					EntrySem.Signal();
-					printf("NEW CUSTOMER ARRIVED AT PUMP %s\n", PumpNumber.c_str());
+					//printf("NEW CUSTOMER ARRIVED AT PUMP %s\n", PumpNumber.c_str());
 					//newCustomer->newArrival = 1; 
 					while (newCustomer->Authorized != 1){
 						SLEEP(500);
 					}
-					printf("NEW CUSTOMER AUTHORIZED AT PUMP %s\n", PumpNumber.c_str());
+					//printf("NEW CUSTOMER AUTHORIZED AT PUMP %s\n", PumpNumber.c_str());
 					SetFuelGrade(newCustomer->FuelGrade);
 					FillGas(newCustomer->MaxGasLevel);
 					Print2Dos(0); // Print pump status to DOS
