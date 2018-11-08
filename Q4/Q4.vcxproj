@@ -129,11 +129,11 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\rt.cpp" />
     <ClCompile Include="Q4.CPP" />
-    <ClCompile Include="rt.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="rt.h" />
+    <ClInclude Include="..\rt.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

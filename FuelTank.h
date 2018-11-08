@@ -1,5 +1,5 @@
 #pragma once
-#include "Z:\RTExamples\rt.h"
+#include "rt.h"
 #include <stdio.h>
 #include <string>
 
