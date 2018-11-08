@@ -81,42 +81,33 @@ private:
 
 		EntrySem.Signal();
 		rvPump.Wait();
-		CStatus.Wait();
+		//CStatus.Wait();
 		newCustomer->newArrival = 0;
 		newCustomer->Authorized = 0;
-<<<<<<< HEAD
-		for (int i = 0; i < 10000; i++) {
-			if (State == 1) {
-				if (newCustomer->CurrentGasLevel < newCustomer->MaxGasLevel) {
-					newCustomer->CurrentGasLevel += 0.5;
-					CurrentGasLevel = newCustomer->CurrentGasLevel;
-					pTank->WithdrawFuel(0.5, newCustomer->FuelGrade);
-					//pTank->PrintTankLevel(newCustomer->FuelGrade);
-=======
-		newCustomer->CreditCard = 1111;
-		PStatus.Signal();
+		//PStatus.Signal();
+
 		while (1) {
 			if (State == 1) {
 				if (CurrentGasLevel < MaxGasLevel) {
 					CurrentGasLevel += 0.5;
-					CStatus.Wait();
+					//CStatus.Wait();
 					newCustomer->CurrentGasLevel = CurrentGasLevel;
-					PStatus.Signal();
+					//PStatus.Signal();
 					pTank->WithdrawFuel(0.5, FuelGrade);
 					//pTank->PrintTankLevel(newCustomer->FuelGrade);
 					Bill = Price * CurrentGasLevel;
->>>>>>> susandev
+
 					Print2Dos(0); // Print pump status to DOS
 					SLEEP(1000);
 
 				}
 				else {
 					Bill = Price * CurrentGasLevel;
-					CStatus.Wait();
+					//CStatus.Wait();
 					newCustomer->Bill = Bill;
 					newCustomer->Authorized = 0;
 					newCustomer->newArrival = 0;
-					PStatus.Signal();
+					//PStatus.Signal();
 					State = 0;
 					Print2Dos(0); // Print pump status to DOS
 					// Simulate Customer leaving pump
@@ -146,13 +137,7 @@ private:
 			}
 			else {			
 				if (pipe.TestForData()) {
-<<<<<<< HEAD
-					newCustomer->newArrival = 1;
-
-=======
-
 					// Read data from customer-pump pipeline
->>>>>>> susandev
 					Full.Wait();
 					pipe.Read(&GasStr);
 					MaxGasLevel = std::stod(GasStr);
@@ -164,7 +149,14 @@ private:
 					ExitSem.Signal();
 					Empty.Wait();
 					EntrySem.Signal();
-<<<<<<< HEAD
+
+					//CStatus.Wait();
+					newCustomer->MaxGasLevel = MaxGasLevel;
+					newCustomer->FuelGrade = FuelGrade;
+					newCustomer->CreditCard = CreditCard;
+					newCustomer->newArrival = 1;
+					//PStatus.Signal();
+
 					//printf("NEW CUSTOMER ARRIVED AT PUMP %s\n", PumpNumber.c_str());
 					//newCustomer->newArrival = 1; 
 					while (newCustomer->Authorized != 1){
@@ -174,13 +166,7 @@ private:
 					SetFuelGrade(newCustomer->FuelGrade);
 					FillGas(newCustomer->MaxGasLevel);
 					Print2Dos(0); // Print pump status to DOS
-=======
-					CStatus.Wait();
-					newCustomer->MaxGasLevel = MaxGasLevel;
-					newCustomer->FuelGrade = FuelGrade;
-					newCustomer->CreditCard = CreditCard;
-					newCustomer->newArrival = 1;
-					PStatus.Signal();
+
 					// Simulate Customer arriving to pump
 					M.Wait();
 					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
@@ -200,7 +186,6 @@ private:
 					while (newCustomer->Authorized != 1){
 						SLEEP(500);
 					}
->>>>>>> susandev
 
 					M.Wait();
 					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]

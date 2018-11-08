@@ -20,6 +20,10 @@ private:
 	};
 
 	int tankNumber;
+	double tankLevel87;
+	double tankLevel89;
+	double tankLevel91;
+	double tankLevel93;
 	std::string tankName;
 
 	CMutex	*theMutex;	// a pointer to a hidden mutex protecting the ‘tankLevel’ variable above
