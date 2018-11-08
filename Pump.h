@@ -26,23 +26,24 @@ class Pump : public ActiveClass
 		double Bill = 0.0;
 		double Price = 0.0;
 		int FuelGrade = 87;
-		const string *CreditCard;
-		const string *CustomerName;
+		int CreditCard = 0;
 		bool Authorized = 0;
 		bool newArrival = 0;
 		bool customerRecieved = 0;
+		bool PumpState = 0;
 	};
 	double CurrentGasLevel = 0.0;
 	double MaxGasLevel = 0;
 	double Bill = 0.0;
 	int FuelGrade = 87;
-	string CreditCard = "";
+	int CreditCard = 0;
 
 	int State = 0;
 	double Price = 0.0;
 	int CursorY;
 	string FuelGradeType = "REGULAR UNLEADED";
 	string CustomerName;
+	string CreditCardStr;
 	string FuelGradeStr;
 	string GasStr;
 	CMutex	*M; // mutex to protect DOS window
@@ -75,7 +76,7 @@ private:
 		struct CustomerInfo 	 *newCustomer = (struct CustomerInfo *)(dp.LinkDataPool());
 		// calculate Y cursor value
 		CursorY = std::stoi(PumpNumber, nullptr, 10);
-		CursorY = (6 * (CursorY - 1));
+		CursorY = (8 * (CursorY - 1));
 		// Print pump name to DOS
 		M->Wait();
 		MOVE_CURSOR(0, CursorY);             // move cursor to cords [x,y]
@@ -105,7 +106,7 @@ private:
 					pTank->WithdrawFuel(0.5, FuelGrade);
 					//pTank->PrintTankLevel(newCustomer->FuelGrade);
 					Bill = Price * CurrentGasLevel;
-
+					newCustomer->Bill = Bill;
 					Print2Dos(0); // Print pump status to DOS
 					SLEEP(1000);
 
@@ -118,6 +119,7 @@ private:
 					newCustomer->newArrival = 0;
 					//PStatus.Signal();
 					State = 0;
+					newCustomer->PumpState = 0;
 					Print2Dos(0); // Print pump status to DOS
 					// Simulate Customer leaving pump
 					CustomerDeparture();
@@ -131,7 +133,8 @@ private:
 					MaxGasLevel = std::stod(GasStr);
 					pipe.Read(&FuelGradeStr);
 					FuelGrade = std::stoi(FuelGradeStr, nullptr, 10);
-					pipe.Read(&CreditCard);
+					pipe.Read(&CreditCardStr);
+					CreditCard = std::stoi(CreditCardStr, nullptr, 10);
 					pipe.Read(&CustomerName);
 					ExitSem.Signal();
 					Empty.Wait();
@@ -141,11 +144,11 @@ private:
 					CustomerArrival();
 
 					//CStatus.Wait();
-					newCustomer->CustomerName = &CustomerName;
-					newCustomer->CreditCard = &CreditCard;
+					newCustomer->CreditCard = CreditCard;
 					newCustomer->newArrival = 1;
 					CurrentGasLevel = 0;
 					newCustomer->CurrentGasLevel = CurrentGasLevel;
+					newCustomer->PumpState = 1;
 					//PStatus.Signal();
 
 					// Wait for authorization from gas station attendant
