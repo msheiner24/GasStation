@@ -12,7 +12,6 @@ using namespace std;
 #ifndef   __Pump__
 #define   __Pump__
 
-
 class Pump : public ActiveClass
 {
 
@@ -56,57 +55,81 @@ public:
 private:
 
 	int main(void) {
-		//std::string PumpName = std::to_string(PumpNumber);
-
-		CursorY = std::stoi(PumpNumber, nullptr, 10);
-		CursorY = (6 * (CursorY - 1));
-		Print2Dos(1); // Print pump status to DOS
-		//Initialize pipes, semaphores 
+		//Initialize pipes, semaphores , datapools, structs
 		CMutex M("DOSMutex"); // mutex to protect DOS window
 		CTypedPipe <string> pipe(PumpNumber, 4);
 		CSemaphore EntrySem(("entry" + PumpNumber), 0, 1);
 		CSemaphore ExitSem(("exit" + PumpNumber), 0, 1);
 		CSemaphore Full(("full" + PumpNumber), 0, 1);
 		CSemaphore Empty(("empty" + PumpNumber), 0, 1);
-		EntrySem.Signal();
-
-		CDataPool 		dp("dataPoolPump" + PumpNumber , sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
+		CDataPool 		dp("dataPoolPump" + PumpNumber, sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
 		CRendezvous     rvPump("rvPump", 4);		// Attempt to create a rendezvous object involving 4 threads
-		rvPump.Wait();
-
 		struct CustomerInfo 	 *newCustomer = (struct CustomerInfo *)(dp.LinkDataPool());
+		// calculate Y cursor value
+		CursorY = std::stoi(PumpNumber, nullptr, 10);
+		CursorY = (6 * (CursorY - 1));
+		// print status in default state (off)
+		M.Wait();
+		MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
+		printf("\33[2K");
+		printf("Pump off.\n");
+		fflush(stdout);
+		M.Signal();
+		Print2Dos(1); // Print pump status to DOS
 
+		EntrySem.Signal();
+		rvPump.Wait();
 		newCustomer->newArrival = 0;
 		newCustomer->Authorized = 0;
 		newCustomer->CreditCard = 1111;
-		for (int i = 0; i < 10000; i++) {
+		while (1) {
 			if (State == 1) {
 				if (newCustomer->CurrentGasLevel < newCustomer->MaxGasLevel) {
 					newCustomer->CurrentGasLevel += 0.5;
 					CurrentGasLevel = newCustomer->CurrentGasLevel;
 					pTank->WithdrawFuel(0.5, newCustomer->FuelGrade);
-					pTank->PrintTankLevel(newCustomer->FuelGrade);
+					//pTank->PrintTankLevel(newCustomer->FuelGrade);
+					Bill = Price * CurrentGasLevel;
 					Print2Dos(0); // Print pump status to DOS
 					SLEEP(1000);
+
 				}
 				else {
 					newCustomer->Bill = Price * newCustomer->MaxGasLevel;
 					newCustomer->Authorized = 0;
 					newCustomer->newArrival = 0;
+					Bill = Price * CurrentGasLevel;
 					State = 0;
+					Print2Dos(0); // Print pump status to DOS
+					// Simulate Customer leaving pump
+					M.Wait();
+					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
+					printf("\33[2K");
+					printf("Finished filling. Returning hose to pump...\n");
+					fflush(stdout);
+					M.Signal();
+					SLEEP(3000);
+					M.Wait();
+					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
+					printf("\33[2K");
+					printf("Customer %s leaving pump...\n", CustomerName.c_str());
+					fflush(stdout);
+					M.Signal();
+					SLEEP(3000);
+					Print2Dos(1); // Print pump status to DOS
+					M.Wait();
+					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
+					printf("\33[2K");
+					printf("Pump off.\n");
+					fflush(stdout);
+					M.Signal();
+					SLEEP(3000);
 				}
 			}
 			else {			
-				//if ((pipe.TestForData() >= sizeof(newCustomer->MaxGasLevel)) && (pipe.TestForData() >= sizeof(newCustomer->FuelGrade))) {
 				if (pipe.TestForData()) {
 
-				//ps1.Wait();
-					//pipe.Read(&newCustomer->MaxGasLevel, sizeof(newCustomer->MaxGasLevel));
-					//pipe.Read(&newCustomer->FuelGrade, sizeof(newCustomer->FuelGrade));
-					//pipe.Read(&newCustomer->CreditCard, sizeof(newCustomer->CreditCard));
-					//cs1.Signal();
-					newCustomer->newArrival = 1;
-
+					// Read data from customer-pump pipeline
 					Full.Wait();
 					pipe.Read(&GasStr);
 					newCustomer->MaxGasLevel = std::stod(GasStr);
@@ -116,20 +139,64 @@ private:
 					FuelGrade = newCustomer->FuelGrade;
 					pipe.Read(&CreditCardStr);
 					newCustomer->CreditCard = std::stoi(CreditCardStr, nullptr, 10);
+					CreditCard = newCustomer->CreditCard;
 					pipe.Read(&CustomerName);
 					ExitSem.Signal();
 					Empty.Wait();
 					EntrySem.Signal();
-					printf("NEW CUSTOMER ARRIVED AT PUMP %s\n", PumpNumber.c_str());
-					//newCustomer->newArrival = 1; 
+
+					// Simulate Customer arriving to pump
+					newCustomer->newArrival = 1;
+					M.Wait();
+					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
+					printf("\33[2K");
+					printf("Customer %s arrived at pump...\n", CustomerName.c_str());
+					fflush(stdout);
+					M.Signal();
+					SLEEP(3000);
+					M.Wait();
+					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
+					printf("\33[2K");
+					printf("Swiping credit card...\n");
+					fflush(stdout);
+					M.Signal();
+					SLEEP(3000);
+
 					while (newCustomer->Authorized != 1){
 						SLEEP(500);
 					}
-					printf("NEW CUSTOMER AUTHORIZED AT PUMP %s\n", PumpNumber.c_str());
+					M.Wait();
+					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
+					printf("\33[2K");
+					printf("Card authorized...\n");
+					fflush(stdout);
+					M.Signal();
+					SLEEP(1000);
+					M.Wait();
+					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
+					printf("\33[2K");
+					printf("Removing gas pump...\n");
+					fflush(stdout);
+					M.Signal();
+					SLEEP(3000);
+
+					// Set fuel grade and start dispensing
 					SetFuelGrade(newCustomer->FuelGrade);
 					FillGas(newCustomer->MaxGasLevel);
+					M.Wait();
+					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
+					printf("\33[2K");
+					printf("Selected fuel grade %d (%s)...\n", FuelGrade, FuelGradeType.c_str());
+					fflush(stdout);
+					M.Signal();
+					SLEEP(3000);
+					M.Wait();
+					MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
+					printf("\33[2K");
+					printf("Pump on. Dispensing Fuel...\n");
+					fflush(stdout);
+					M.Signal();
 					Print2Dos(0); // Print pump status to DOS
-
 				}
 			}
 		}

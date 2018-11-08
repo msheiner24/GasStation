@@ -4,7 +4,7 @@
 
 #include 	<stdio.h>
 #include	<string>
-#include 	"Z:\RTExamples\rt.h"		// change pathlist to "rt.h" file to suit location on disk
+#include 	"..\\rt.h"		// change pathlist to "rt.h" file to suit location on disk
 
 
 //
