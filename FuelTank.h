@@ -6,18 +6,11 @@
 #ifndef   __FuelTank__
 #define   __FuelTank__
 
-class 	FuelTank   {
-
+class 	FuelTank{
 
 private:
-	double tankLevel87;
-	double tankLevel89;
-	double tankLevel91;
-	double tankLevel93;
-	int tankNumber;
-	string tankName;
-	CMutex	*theMutex;	// a pointer to a hidden mutex protecting the ‘tankLevel’ variable above
-	
+
+
 	struct tankDataPool {
 		int tankNumber;
 		double tankLevel87;
@@ -26,46 +19,48 @@ private:
 		double tankLevel93;
 	};
 
-	//struct tankDataPool 	 tankInfo;
-	//struct tankDataPool     *ptankInfo;
+	int tankNumber;
+	std::string tankName;
 
+	CMutex	*theMutex;	// a pointer to a hidden mutex protecting the ‘tankLevel’ variable above
 	
+	CDataPool *FuelTankDataPool;
+
+	struct tankDataPool *pTankInfo;
 
 public:
+
 	BOOL WithdrawFuel (double amount, int FuelGrade) 
 	{ 
-		CDataPool 		dp("dataPoolTank" + tankName, sizeof(struct tankDataPool));	// Create a datapool to communicate with gsc
-		struct tankDataPool *ptankInfo = (struct tankDataPool *)(dp.LinkDataPool());
-
 		theMutex -> Wait() ;
 		BOOL Status;
 
 		switch (FuelGrade) {
 		case 87:
-			if (ptankInfo->tankLevel87 >= amount) {
+			if (pTankInfo->tankLevel87 >= amount) {
 				Status = TRUE;
-				ptankInfo->tankLevel87 = ptankInfo->tankLevel87 - amount;
+				pTankInfo->tankLevel87 = pTankInfo->tankLevel87 - amount;
 			}
 			else { Status = FALSE; };
 			break;
 		case 89:
-			if (ptankInfo->tankLevel89 >= amount) {
+			if (pTankInfo->tankLevel89 >= amount) {
 				Status = TRUE;
-				ptankInfo->tankLevel89 = ptankInfo->tankLevel89 - amount;
+				pTankInfo->tankLevel89 = pTankInfo->tankLevel89 - amount;
 			}
 			else { Status = FALSE; };
 			break;
 		case 91:
-			if (ptankInfo->tankLevel91 >= amount) {
+			if (pTankInfo->tankLevel91 >= amount) {
 				Status = TRUE;
-				ptankInfo->tankLevel91 = ptankInfo->tankLevel91 - amount;
+				pTankInfo->tankLevel91 = pTankInfo->tankLevel91 - amount;
 			}
 			else { Status = FALSE; };
 			break;
 		case 93:
-			if (ptankInfo->tankLevel93 >= amount) {
+			if (pTankInfo->tankLevel93 >= amount) {
 				Status = TRUE;
-				ptankInfo->tankLevel93 = ptankInfo->tankLevel93 - amount;
+				pTankInfo->tankLevel93 = pTankInfo->tankLevel93 - amount;
 			}
 			else { Status = FALSE; };
 			break;
@@ -123,43 +118,8 @@ public:
 		theMutex -> Signal() ;
 		//updateDataPool();
 	}  
-	
-	void PrintTankLevel(int FuelGrade)
-	{
-		theMutex -> Wait() ;
-		int tankIndex = 0;
-		switch (FuelGrade) {
-		case 87:
-			printf("Tank #%d FuelGrade %d has = %gL remaining\n", tankNumber, 87, tankLevel87);
-			break;
-		case 89:
-			printf("Tank #%d FuelGrade %d has = %gL remaining\n", tankNumber, 89, tankLevel89);
-			break;
-		case 91:
-			printf("Tank #%d FuelGrade %d has = %gL remaining\n", tankNumber, 91, tankLevel91);
-			break;
-		case 93:
-			printf("Tank #%d FuelGrade %d has = %gL remaining\n", tankNumber, 93, tankLevel93);
-			break;
-		default:
-			printf("YOUDUNGOOFED");
-			break;
-		}
-		theMutex -> Signal() ;
-	}
 
-	void updateDataPool(){
-		//CDataPool 		dp("dataPoolTank" + tankName, sizeof(struct tankDataPool));	// Create a datapool to communicate with gsc
-		//struct tankDataPool 	 *tankInfo = (struct tankDataPool *)(dp.LinkDataPool());
-		
-		theMutex->Wait();
-		//ptankInfo->tankNumber  = tankNumber;
-		//ptankInfo->tankLevel87 = tankLevel87;
-		//ptankInfo->tankLevel89 = tankLevel89;
-		//ptankInfo->tankLevel91 = tankLevel91;
-		//ptankInfo->tankLevel93 = tankLevel93;
-		theMutex->Signal();
-	}
+
 
 
 	// constructor and destructor
@@ -168,34 +128,23 @@ public:
 		tankNumber = _tankNumber;
 		tankName = std::to_string(tankNumber);
 		
-
+		FuelTankDataPool = new CDataPool("dataPoolTank" + tankName, sizeof(struct tankDataPool));	// Create a datapool to communicate with gsc
+		pTankInfo = (struct tankDataPool *)(FuelTankDataPool->LinkDataPool());
 		
-		//
-		//ptankInfo = &tankInfo;
-		
-		//CDataPool 		dp2("dataPoolTank" + tankName, sizeof(struct tankDataPool));	// Create a datapool to communicate with gsc
-		//ptankInfo = (struct tankDataPool *)(dp2.LinkDataPool());
-		CDataPool 		dp2("dataPoolTank"+tankName, sizeof(struct tankDataPool));	// Create a datapool to communicate with gsc
-		struct tankDataPool 	 *ptankInfo = (struct tankDataPool *)(dp2.LinkDataPool());
-														//struct tankDataPool *ptankInfo = (struct tankDataPool *)(dp2.LinkDataPool());
-		//printf("Creating datapool dataPoolTank%s", tankName);
-		//dpTank = (struct tankDataPool *)(dp.LinkDataPool());
-
 		theMutex = new CMutex ("MyFuelTank") ; 
-		//theMutex->Wait();
-		ptankInfo->tankNumber = tankNumber;
-		ptankInfo->tankLevel87 = 500.0;
-		ptankInfo->tankLevel89 = 500.0;
-		ptankInfo->tankLevel91 = 500.0;
-		ptankInfo->tankLevel93 = 500.0;
-		//pTankInfo = &tankInfo;
-		//updateDataPool();
-		//theMutex->Signal();
+		theMutex->Wait();
+		pTankInfo->tankNumber = tankNumber;
+		pTankInfo->tankLevel87 = 500.0;
+		pTankInfo->tankLevel89 = 500.0;
+		pTankInfo->tankLevel91 = 500.0;
+		pTankInfo->tankLevel93 = 500.0;
+		theMutex->Signal();
 		
 	}
 
 	~FuelTank () {
 		delete theMutex; 
+		delete FuelTankDataPool;
 	}
 } ;	
 
