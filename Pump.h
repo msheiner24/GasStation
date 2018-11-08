@@ -24,23 +24,25 @@ class Pump : public ActiveClass
 		double CurrentGasLevel = 0.0;
 		double MaxGasLevel = 0;
 		double Bill = 0.0;
+		double Price = 0.0;
 		int FuelGrade = 87;
-		int CreditCard = 0;
+		const string *CreditCard;
+		const string *CustomerName;
 		bool Authorized = 0;
 		bool newArrival = 0;
+		bool customerRecieved = 0;
 	};
 	double CurrentGasLevel = 0.0;
 	double MaxGasLevel = 0;
 	double Bill = 0.0;
 	int FuelGrade = 87;
-	int CreditCard = 0;
+	string CreditCard = "";
 
 	int State = 0;
 	double Price = 0.0;
 	int CursorY;
 	string FuelGradeType = "REGULAR UNLEADED";
 	string CustomerName;
-	string CreditCardStr;
 	string FuelGradeStr;
 	string GasStr;
 	CMutex	*M; // mutex to protect DOS window
@@ -50,11 +52,12 @@ public:
 	Pump();
 	~Pump();
 	void SetFuelGrade(int FuelGrade);
-	void FillGas(double Gas);
+	void FillGas();
 	void Print2Dos(int pump_state);
 	void CustomerArrival();
 	void CustomerAuthorized();
 	void CustomerDeparture();
+	void CustomerNotAuthorized();
 
 private:
 
@@ -128,8 +131,7 @@ private:
 					MaxGasLevel = std::stod(GasStr);
 					pipe.Read(&FuelGradeStr);
 					FuelGrade = std::stoi(FuelGradeStr, nullptr, 10);
-					pipe.Read(&CreditCardStr);
-					CreditCard = std::stoi(CreditCardStr, nullptr, 10);
+					pipe.Read(&CreditCard);
 					pipe.Read(&CustomerName);
 					ExitSem.Signal();
 					Empty.Wait();
@@ -139,22 +141,32 @@ private:
 					CustomerArrival();
 
 					//CStatus.Wait();
-					newCustomer->MaxGasLevel = MaxGasLevel;
-					newCustomer->FuelGrade = FuelGrade;
-					newCustomer->CreditCard = CreditCard;
+					newCustomer->CustomerName = &CustomerName;
+					newCustomer->CreditCard = &CreditCard;
 					newCustomer->newArrival = 1;
+					CurrentGasLevel = 0;
+					newCustomer->CurrentGasLevel = CurrentGasLevel;
 					//PStatus.Signal();
 
 					// Wait for authorization from gas station attendant
-					while (newCustomer->Authorized != 1) {
+					while (newCustomer->customerRecieved != 1) {
 						SLEEP(500);
 					}
-					// Simulate Customer authorization
-					CustomerAuthorized();
 
-					SetFuelGrade(FuelGrade);
-					FillGas(MaxGasLevel);
-					Print2Dos(0); // Print pump status to DOS
+					if (newCustomer->Authorized) {
+						// Simulate Customer authorization
+						CustomerAuthorized();
+						//CStatus.Wait();
+						newCustomer->Price = Price;
+						newCustomer->MaxGasLevel = MaxGasLevel;
+						newCustomer->FuelGrade = FuelGrade;
+						//PStatus.Signal();
+						Print2Dos(0); // Print pump status to DOS
+					}
+					else {
+						CustomerNotAuthorized();
+					}
+					newCustomer->customerRecieved = 0;
 				}
 			}
 		}
