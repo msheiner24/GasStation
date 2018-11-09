@@ -62,36 +62,58 @@ void Pump::FillGas()
 void Pump::Print2Dos(int pump_state) 	// call default base class constructor 
 {
 	M->Wait();
+	MOVE_CURSOR(0, CursorY + 2);             // move cursor to cords [x,y]
+	printf("\33[2K");
+	printf("\rGas Prices:\n");
+	fflush(stdout);		      	// force output to be written to screen
+	MOVE_CURSOR(0, CursorY + 3);             // move cursor to cords [x,y]
+	printf("\33[2K");
+	printf("\rGrade 87: $1.22/Litre\n");
+	fflush(stdout);		      	// force output to be written to screen
+	MOVE_CURSOR(0, CursorY + 4);             // move cursor to cords [x,y]
+	printf("\33[2K");
+	printf("\rGrade 89: $1.30/Litre\n");
+	fflush(stdout);		      	// force output to be written to screen
+	MOVE_CURSOR(0, CursorY + 5);             // move cursor to cords [x,y]
+	printf("\33[2K");
+	printf("\rGrade 91: $1.38/Litre\n");
+	fflush(stdout);		      	// force output to be written to screen
+	MOVE_CURSOR(0, CursorY + 6);             // move cursor to cords [x,y]
+	printf("\33[2K");
+	printf("\rGrade 93: $1.47/Litre\n");
+	fflush(stdout);		      	// force output to be written to screen
 	if (pump_state) {
-		MOVE_CURSOR(0, CursorY + 2);             // move cursor to cords [x,y]
-		printf("\33[2K");
-		printf("\rFill Level:\n");
-		fflush(stdout);		      	// force output to be written to screen
-		MOVE_CURSOR(0, CursorY + 3);             // move cursor to cords [x,y]
-		printf("\33[2K");
-		printf("\rBill:\n");
-		fflush(stdout);		      	// force output to be written to screen
 		MOVE_CURSOR(40, CursorY + 2);             // move cursor to cords [x,y]
-		printf("Price:\n");
+		printf("Customer Name:\n");
 		fflush(stdout);		      	// force output to be written to screen
 		MOVE_CURSOR(40, CursorY + 3);             // move cursor to cords [x,y]
+		printf("Credit Card:\n");
+		fflush(stdout);		      	// force output to be written to screen
+		MOVE_CURSOR(40, CursorY + 4);             // move cursor to cords [x,y]
 		printf("Fuel Grade:\n");
+		fflush(stdout);		// force output to be written to screen
+		MOVE_CURSOR(40, CursorY + 5);             // move cursor to cords [x,y]
+		printf("Fill Level:\n");
+		fflush(stdout);		// force output to be written to screen
+		MOVE_CURSOR(40, CursorY + 6);             // move cursor to cords [x,y]
+		printf("Bill:\n");
 		fflush(stdout);		      	// force output to be written to screen
 	}
 	else {
-		MOVE_CURSOR(0, CursorY + 2);             // move cursor to cords [x,y]
-		printf("\33[2K");
-		printf("\rFill Level: %.2f Litres\n", CurrentGasLevel);
-		fflush(stdout);		      	// force output to be written to screen
-		MOVE_CURSOR(0, CursorY + 3);             // move cursor to cords [x,y]
-		printf("\33[2K");
-		printf("\rBill: $%.2f\n", Bill);
-		fflush(stdout);		      	// force output to be written to screen
 		MOVE_CURSOR(40, CursorY + 2);             // move cursor to cords [x,y]
-		printf("Price: $%.2f/litre\n", Price);
+		printf("Customer Name: %s\n", CustomerName.c_str());
 		fflush(stdout);		      	// force output to be written to screen
 		MOVE_CURSOR(40, CursorY + 3);             // move cursor to cords [x,y]
+		printf("Credit Card: %d\n", CreditCard);
+		fflush(stdout);		      	// force output to be written to screen
+		MOVE_CURSOR(40, CursorY + 4);             // move cursor to cords [x,y]
 		printf("Fuel Grade: %d (%s)\n", FuelGrade, FuelGradeType.c_str());
+		fflush(stdout);		// force output to be written to screen
+		MOVE_CURSOR(40, CursorY + 5);             // move cursor to cords [x,y]
+		printf("Fill Level: %.2f Litres\n", CurrentGasLevel);
+		fflush(stdout);		// force output to be written to screen
+		MOVE_CURSOR(40, CursorY + 6);             // move cursor to cords [x,y]
+		printf("Bill: $%.2f\n", Bill);
 		fflush(stdout);		      	// force output to be written to screen
 	}
 	M->Signal();
@@ -114,18 +136,15 @@ void Pump::CustomerArrival()
 	fflush(stdout);
 	M->Signal();
 	SLEEP(3000);
-}
 
-void Pump::CustomerAuthorized()
-{
-	// Simulate Customer authorization
+	// Simulate credit card authorization
 	M->Wait();
 	MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
 	printf("\33[2K");
 	printf("\rCard authorized...\n");
 	fflush(stdout);
 	M->Signal();
-	SLEEP(1000);
+	SLEEP(2000);
 	M->Wait();
 	MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
 	printf("\33[2K");
@@ -136,7 +155,6 @@ void Pump::CustomerAuthorized()
 
 	// Set fuel grade and start dispensing
 	SetFuelGrade(FuelGrade);
-	FillGas();
 	M->Wait();
 	MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
 	printf("\33[2K");
@@ -144,6 +162,18 @@ void Pump::CustomerAuthorized()
 	fflush(stdout);
 	M->Signal();
 	SLEEP(3000);
+	M->Wait();
+	MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
+	printf("\33[2K");
+	printf("\rWaiting for pump authorization...\n", FuelGrade, FuelGradeType.c_str());
+	fflush(stdout);
+	M->Signal();
+	SLEEP(3000);
+}
+
+void Pump::CustomerAuthorized()
+{
+	FillGas();
 	M->Wait();
 	MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
 	printf("\33[2K");
