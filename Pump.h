@@ -118,6 +118,7 @@ private:
 					newCustomer->Bill = Bill;
 					newCustomer->Authorized = 0;
 					newCustomer->newArrival = 0;
+					pTank->setInUse(0);
 					//PStatus.Signal();
 					Print2Dos(0); // Print pump status to DOS
 					// Simulate Customer leaving pump
@@ -165,9 +166,13 @@ private:
 					bool Authorized = newCustomer->Authorized;
 					//CStatus.Signal();
 					if (Authorized) {
+						while (pTank->checkFilling()) {
+							SLEEP(500);
+						}
 						// Simulate Customer authorization
 						CustomerAuthorized();
 						//CStatus.Wait();
+						pTank->setInUse(1);
 						newCustomer->Price = Price;
 						newCustomer->MaxGasLevel = MaxGasLevel;
 						newCustomer->FuelGrade = FuelGrade;

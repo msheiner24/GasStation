@@ -78,7 +78,7 @@ UINT __stdcall PumpComm(void *args)
 				M.Wait();
 				MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
 				printf("\33[2K");
-				printf("\rPump Status: Off                                                                                         \n");
+				printf("\rPump Status: Off                                                                            \n");
 				fflush(stdout);		      	// force output to be written to screen
 				MOVE_CURSOR(0, CursorY + 2);             // move cursor to cords [x,y]
 				printf("\33[2K");
@@ -119,14 +119,6 @@ UINT __stdcall PumpComm(void *args)
 			fflush(stdout);
 			M.Signal();
 
-			//M.Wait();
-			//MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
-			//printf("\33[2K");
-			//printf("\rCustomer w/ Credit card %d waiting for authorization at Pump %d. Authorize? (0/1) ", pumpDataPool->CreditCard, PumpNumber);
-			//fflush(stdout);		      	// force output to be written to screen
-			//M.Signal();
-			//cin >> Authorized;
-			//M.Signal();
 
 			if (Authorized) {
 				//CStatus.Wait();
@@ -230,14 +222,39 @@ UINT __stdcall TankComm(void *args)
 			MOVE_CURSOR(0, 55);             // move cursor to cords [x,y]
 			printf("\33[2K");
 			printf("\rWARNING! FUELTANK %d IS BELOW 200L of 87, fill after current customer", TankNumber);
-
+			fflush(stdout);
+			M.Signal();
+			SLEEP(1500);
 			while (tankDataPool->inUse)
 			{
-				SLEEP(500);
+				// Print default pump info
+				M.Wait();
+				MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
+				printf("\33[2K");
+				printf("\rREGULAR UNLEADED: %f\n", tankDataPool->tankLevel87);
+				fflush(stdout);		      	// force output to be written to screen
+				MOVE_CURSOR(0, CursorY + 2);             // move cursor to cords [x,y]
+				printf("\33[2K");
+				printf("\rMID-GRADE UNLEADED: %f\n", tankDataPool->tankLevel89);
+				fflush(stdout);		      	// force output to be written to screen
+				MOVE_CURSOR(0, CursorY + 3);             // move cursor to cords [x,y]
+				printf("\33[2K");
+				printf("\rPREMIUM UNLEADED: %f\n", tankDataPool->tankLevel91);
+				fflush(stdout);		      	// force output to be written to screen
+				MOVE_CURSOR(0, CursorY + 4);             // move cursor to cords [x,y]
+				printf("\33[2K");
+				printf("\rSUPER PREMIUM UNLEADED: %f\n", tankDataPool->tankLevel93);
+				fflush(stdout);		      	// force output to be written to screen
+				M.Signal();
+				SLEEP(800);
 			}
+			M.Wait();
 			F.Wait();
 			tankDataPool->filling = 1;
-			printf("\rFuel Tank  Not In Use, press f to fill:										 ");
+			MOVE_CURSOR(0, 55);             // move cursor to cords [x,y]
+			printf("\r											");
+			printf("\rFuel Tank  Not In Use, press f to fill:								 ");
+			printf("\r");
 			cin >> fill;
 			if (fill == 'f') {
 				tankDataPool->tankLevel87 = 500;
@@ -248,80 +265,174 @@ UINT __stdcall TankComm(void *args)
 				MOVE_CURSOR(0, 55);             // move cursor to cords [x,y]
 				printf("\r															");
 				fflush(stdout);		      	// force output to be written to screen
+				MOVE_CURSOR(0, 56);             // move cursor to cords [x,y]
+				printf("\r															");
+				fflush(stdout);		      	// force output to be written to screen
 			}
 		}
-		else if (tankDataPool->tankLevel89 < 200) {
-			MOVE_CURSOR(0, 56);             // move cursor to cords [x,y]
+		else if (tankDataPool->tankLevel89 < 200) 
+		{
+			MOVE_CURSOR(0, 57);             // move cursor to cords [x,y]
 			printf("\33[2K");
-			printf("\rWARNING! FUELTANK %d IS BELOW 200L of 87, fill after current customer", TankNumber);
-
+			printf("\rWARNING! FUELTANK %d IS BELOW 200L of 89, fill after current customer", TankNumber);
+			fflush(stdout);
+			M.Signal();
+			SLEEP(1500);
 			while (tankDataPool->inUse)
 			{
-				SLEEP(500);
+				// Print default pump info
+				M.Wait();
+				MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
+				printf("\33[2K");
+				printf("\rREGULAR UNLEADED: %f\n", tankDataPool->tankLevel87);
+				fflush(stdout);		      	// force output to be written to screen
+				MOVE_CURSOR(0, CursorY + 2);             // move cursor to cords [x,y]
+				printf("\33[2K");
+				printf("\rMID-GRADE UNLEADED: %f\n", tankDataPool->tankLevel89);
+				fflush(stdout);		      	// force output to be written to screen
+				MOVE_CURSOR(0, CursorY + 3);             // move cursor to cords [x,y]
+				printf("\33[2K");
+				printf("\rPREMIUM UNLEADED: %f\n", tankDataPool->tankLevel91);
+				fflush(stdout);		      	// force output to be written to screen
+				MOVE_CURSOR(0, CursorY + 4);             // move cursor to cords [x,y]
+				printf("\33[2K");
+				printf("\rSUPER PREMIUM UNLEADED: %f\n", tankDataPool->tankLevel93);
+				fflush(stdout);		      	// force output to be written to screen
+				M.Signal();
+				SLEEP(800);
 			}
+			M.Wait();
 			F.Wait();
 			tankDataPool->filling = 1;
-			printf("\r															\n");
-			fflush(stdout);		      	// force output to be written to screen
-			printf("Fuel Tank Not In Use, press f to fill:     ");
+			MOVE_CURSOR(0, 57);             // move cursor to cords [x,y]
+			printf("\rFuel Tank  Not In Use, press f to fill:								 ");
+			printf("\r");
 			cin >> fill;
 			if (fill == 'f') {
-				tankDataPool->tankLevel87 = 500;
+				tankDataPool->tankLevel89 = 500;
 				SLEEP(1000);
 				tankDataPool->filling = 0;
 				F.Signal();
-				MOVE_CURSOR(0, 56);
 				fflush(stdout);		      	// force output to be written to screen
+				MOVE_CURSOR(0, 57);             // move cursor to cords [x,y]
+				printf("\r															");
+				fflush(stdout);		      	// force output to be written to screen
+				MOVE_CURSOR(0, 58);             // move cursor to cords [x,y]
+				printf("\r															");
+				fflush(stdout);		      	// force output to be written to screen
+			}
+		}
+		else if (tankDataPool->tankLevel91 < 200) 
+		{
+			MOVE_CURSOR(0, 59);             // move cursor to cords [x,y]
+			printf("\33[2K");
+			printf("\rWARNING! FUELTANK %d IS BELOW 200L of 91, fill after current customer", TankNumber);
+			M.Signal();
+			fflush(stdout);
+			SLEEP(1500);
+			while (tankDataPool->inUse)
+			{
+				// Print default pump info
+				M.Wait();
+				MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
 				printf("\33[2K");
-				printf("%c[2K", 27);
+				printf("\rREGULAR UNLEADED: %f\n", tankDataPool->tankLevel87);
+				fflush(stdout);		      	// force output to be written to screen
+				MOVE_CURSOR(0, CursorY + 2);             // move cursor to cords [x,y]
+				printf("\33[2K");
+				printf("\rMID-GRADE UNLEADED: %f\n", tankDataPool->tankLevel89);
+				fflush(stdout);		      	// force output to be written to screen
+				MOVE_CURSOR(0, CursorY + 3);             // move cursor to cords [x,y]
+				printf("\33[2K");
+				printf("\rPREMIUM UNLEADED: %f\n", tankDataPool->tankLevel91);
+				fflush(stdout);		      	// force output to be written to screen
+				MOVE_CURSOR(0, CursorY + 4);             // move cursor to cords [x,y]
+				printf("\33[2K");
+				printf("\rSUPER PREMIUM UNLEADED: %f\n", tankDataPool->tankLevel93);
+				fflush(stdout);		      	// force output to be written to screen
+				M.Signal();
+				SLEEP(800);
 			}
-		}
-		else if (tankDataPool->tankLevel91 < 200) {
-			MOVE_CURSOR(0, 57);             // move cursor to cords [x,y]
-			printf("\33[2K");
-			printf("\rWARNING! FUELTANK %d IS BELOW 200L of 87, fill after current customer", TankNumber);
-			while (tankDataPool->inUse)
-			{
-				SLEEP(500);
-			}
+			M.Wait();
 			F.Wait();
 			tankDataPool->filling = 1;
-			tankDataPool->tankLevel87 = 500;
-			tankDataPool->filling = 0;
-			F.Signal();
-			SLEEP(1000);
-			fflush(stdout);		      	// force output to be written to screen
-			printf("\33[2K");
-			printf("\r															\n");
-			fflush(stdout);		      	// force output to be written to screen
+			MOVE_CURSOR(0, 59);             // move cursor to cords [x,y]
+			printf("\rFuel Tank  Not In Use, press f to fill:								 ");
+			printf("\r");
+			cin >> fill;
+			if (fill == 'f') {
+				tankDataPool->tankLevel91 = 500;
+				SLEEP(1000);
+				tankDataPool->filling = 0;
+				F.Signal();
+				fflush(stdout);		      	// force output to be written to screen
+				MOVE_CURSOR(0, 59);             // move cursor to cords [x,y]
+				printf("\r															");
+				fflush(stdout);		      	// force output to be written to screen
+				MOVE_CURSOR(0, 60);             // move cursor to cords [x,y]
+				printf("\r															");
+				fflush(stdout);		      	// force output to be written to screen
+			}
 		}
-		else if (tankDataPool->tankLevel93 < 200) {
-			MOVE_CURSOR(0, 58);             // move cursor to cords [x,y]
+		else if (tankDataPool->tankLevel93 < 200) 
+		{
+			MOVE_CURSOR(0, 61);             // move cursor to cords [x,y]
 			printf("\33[2K");
-			printf("\rWARNING! FUELTANK %d IS BELOW 200L of 87, fill after current customer", TankNumber);
-
+			printf("\rWARNING! FUELTANK %d IS BELOW 200L of 93, fill after current customer", TankNumber);
+			M.Signal();
+			fflush(stdout);
+			SLEEP(1500);
 			while (tankDataPool->inUse)
 			{
-				SLEEP(500);
+				// Print default pump info
+				M.Wait();
+				MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
+				printf("\33[2K");
+				printf("\rREGULAR UNLEADED: %f\n", tankDataPool->tankLevel87);
+				fflush(stdout);		      	// force output to be written to screen
+				MOVE_CURSOR(0, CursorY + 2);             // move cursor to cords [x,y]
+				printf("\33[2K");
+				printf("\rMID-GRADE UNLEADED: %f\n", tankDataPool->tankLevel89);
+				fflush(stdout);		      	// force output to be written to screen
+				MOVE_CURSOR(0, CursorY + 3);             // move cursor to cords [x,y]
+				printf("\33[2K");
+				printf("\rPREMIUM UNLEADED: %f\n", tankDataPool->tankLevel91);
+				fflush(stdout);		      	// force output to be written to screen
+				MOVE_CURSOR(0, CursorY + 4);             // move cursor to cords [x,y]
+				printf("\33[2K");
+				printf("\rSUPER PREMIUM UNLEADED: %f\n", tankDataPool->tankLevel93);
+				fflush(stdout);		      	// force output to be written to screen
+				M.Signal();
+				SLEEP(800);
 			}
+			M.Wait();
 			F.Wait();
 			tankDataPool->filling = 1;
-			tankDataPool->tankLevel87 = 500;
-			SLEEP(1000);
-			tankDataPool->filling = 0;
-			F.Signal();
-			fflush(stdout);		      	// force output to be written to screen
-			printf("\33[2K");
-			printf("\r															\n");
-			fflush(stdout);		      	// force output to be written to screen
+			MOVE_CURSOR(0, 61);             // move cursor to cords [x,y]
+			printf("\rFuel Tank  Not In Use, press f to fill:								 ");
+			printf("\r");
+			cin >> fill;
+			if (fill == 'f') {
+				tankDataPool->tankLevel93 = 500;
+				SLEEP(1000);
+				tankDataPool->filling = 0;
+				F.Signal();
+				fflush(stdout);		      	// force output to be written to screen
+				MOVE_CURSOR(0, 61);             // move cursor to cords [x,y]
+				printf("\r															");
+				fflush(stdout);		      	// force output to be written to screen
+				MOVE_CURSOR(0, 62);             // move cursor to cords [x,y]
+				printf("\r															");
+				fflush(stdout);		      	// force output to be written to screen
+			}
 		}
 		M.Signal();
-
 	}
-	}
+}
 
 int   main()
 {
+	CMutex M("DOSMutex2"); // mutex to protect DOS window
 	int i ;
 	int Num[4] = { 1,2,3,4 };
 
@@ -336,9 +447,11 @@ int   main()
 	}
 	
 	while (1) {
+		/*if
+			M.Wait();
+			M.Signal();*/
 		int x = 1;
 	}
-	//getchar();			// pause seconds so programmer can view output before child dies
 
 	return 0 ;
 }

@@ -45,33 +45,34 @@ public:
 		case 87:
 			if (pTankInfo->tankLevel87 >= amount) {
 				Status = TRUE;
-				pTankInfo->tankLevel87 = pTankInfo->tankLevel87 - amount;
+				//pTankInfo->tankLevel87 = pTankInfo->tankLevel87 - amount;
 			}
 			else { Status = FALSE; };
+			pTankInfo->tankLevel87 = pTankInfo->tankLevel87 - amount;
 			break;
 		case 89:
 			if (pTankInfo->tankLevel89 >= amount) {
 				Status = TRUE;
-				pTankInfo->tankLevel89 = pTankInfo->tankLevel89 - amount;
+				//pTankInfo->tankLevel89 = pTankInfo->tankLevel89 - amount;
 			}
 			else { Status = FALSE; };
+			pTankInfo->tankLevel89 = pTankInfo->tankLevel89 - amount;
 			break;
 		case 91:
 			if (pTankInfo->tankLevel91 >= amount) {
 				Status = TRUE;
-				pTankInfo->tankLevel91 = pTankInfo->tankLevel91 - amount;
+				//pTankInfo->tankLevel91 = pTankInfo->tankLevel91 - amount;
 			}
 			else { Status = FALSE; };
+			pTankInfo->tankLevel91 = pTankInfo->tankLevel91 - amount;
 			break;
 		case 93:
 			if (pTankInfo->tankLevel93 >= amount) {
 				Status = TRUE;
-				pTankInfo->tankLevel93 = pTankInfo->tankLevel93 - amount;
+				//pTankInfo->tankLevel93 = pTankInfo->tankLevel93 - amount;
 			}
 			else { Status = FALSE; };
-			break;
-		default:
-			printf("YOUDUNGOOFED");
+			pTankInfo->tankLevel93 = pTankInfo->tankLevel93 - amount;
 			break;
 		}
 
@@ -117,9 +118,6 @@ public:
 				tankLevel93 = 500;
 			}
 			break;
-		default:
-			printf("YOUDUNGOOFED");
-			break;
 		}
 		theMutex->Signal();
 		//updateDataPool();
@@ -152,8 +150,8 @@ public:
 		theMutex->Wait();
 		pTankInfo->tankNumber = tankNumber;
 		pTankInfo->tankLevel87 = 205.0;
-		pTankInfo->tankLevel89 = 500.0;
-		pTankInfo->tankLevel91 = 500.0;
+		pTankInfo->tankLevel89 = 210.0;
+		pTankInfo->tankLevel91 = 207.0;
 		pTankInfo->tankLevel93 = 500.0;
 		pTankInfo->inUse = 0;
 		pTankInfo->filling = 0;
