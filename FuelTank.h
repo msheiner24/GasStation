@@ -6,7 +6,7 @@
 #ifndef   __FuelTank__
 #define   __FuelTank__
 
-class 	FuelTank{
+class 	FuelTank {
 
 private:
 
@@ -17,6 +17,8 @@ private:
 		double tankLevel89;
 		double tankLevel91;
 		double tankLevel93;
+		bool   inUse;
+		bool   filling;
 	};
 
 	int tankNumber;
@@ -27,16 +29,16 @@ private:
 	std::string tankName;
 
 	CMutex	*theMutex;	// a pointer to a hidden mutex protecting the ‘tankLevel’ variable above
-	
+
 	CDataPool *FuelTankDataPool;
 
 	struct tankDataPool *pTankInfo;
 
 public:
 
-	BOOL WithdrawFuel (double amount, int FuelGrade) 
-	{ 
-		theMutex -> Wait() ;
+	BOOL WithdrawFuel(double amount, int FuelGrade)
+	{
+		theMutex->Wait();
 		BOOL Status;
 
 		switch (FuelGrade) {
@@ -73,22 +75,22 @@ public:
 			break;
 		}
 
-		theMutex -> Signal() ;
+		theMutex->Signal();
 		//updateDataPool();
-		return Status ;
-	} 
+		return Status;
+	}
 
-	void AddFuel (double amount, int FuelGrade)
+	void AddFuel(double amount, int FuelGrade)
 	{
-		theMutex -> Wait() ;
+		theMutex->Wait();
 		BOOL Status;
 		switch (FuelGrade) {
 		case 87:
 			if (tankLevel87 + amount < 500) {
 				tankLevel87 = tankLevel87 + amount;
 			}
-			else { 
-				tankLevel87 = 500; 
+			else {
+				tankLevel87 = 500;
 			}
 			break;
 		case 89:
@@ -119,37 +121,50 @@ public:
 			printf("YOUDUNGOOFED");
 			break;
 		}
-		theMutex -> Signal() ;
+		theMutex->Signal();
 		//updateDataPool();
-	}  
+	}
 
-
+	BOOL checkFilling() {
+		bool flag;
+		theMutex->Wait();
+		flag = pTankInfo->filling;
+		theMutex->Signal();
+		return flag;
+	}
+	void setInUse(BOOL flag) {
+		theMutex->Wait();
+		pTankInfo->inUse = flag;
+		theMutex->Signal();
+	}
 
 
 	// constructor and destructor
-	FuelTank (int _tankNumber) 
-	{ 		
+	FuelTank(int _tankNumber)
+	{
 		tankNumber = _tankNumber;
 		tankName = std::to_string(tankNumber);
-		
+
 		FuelTankDataPool = new CDataPool("dataPoolTank" + tankName, sizeof(struct tankDataPool));	// Create a datapool to communicate with gsc
 		pTankInfo = (struct tankDataPool *)(FuelTankDataPool->LinkDataPool());
-		
-		theMutex = new CMutex ("MyFuelTank") ; 
+
+		theMutex = new CMutex("MyFuelTank");
 		theMutex->Wait();
 		pTankInfo->tankNumber = tankNumber;
-		pTankInfo->tankLevel87 = 500.0;
+		pTankInfo->tankLevel87 = 205.0;
 		pTankInfo->tankLevel89 = 500.0;
 		pTankInfo->tankLevel91 = 500.0;
 		pTankInfo->tankLevel93 = 500.0;
+		pTankInfo->inUse = 0;
+		pTankInfo->filling = 0;
 		theMutex->Signal();
-		
+
 	}
 
-	~FuelTank () {
-		delete theMutex; 
+	~FuelTank() {
+		delete theMutex;
 		delete FuelTankDataPool;
 	}
-} ;	
+};
 
 #endif

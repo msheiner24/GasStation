@@ -155,7 +155,6 @@ void Pump::CustomerArrival()
 
 	// Set fuel grade and start dispensing
 	SetFuelGrade(FuelGrade);
-	FillGas();
 	M->Wait();
 	MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
 	printf("\33[2K");
@@ -174,6 +173,7 @@ void Pump::CustomerArrival()
 
 void Pump::CustomerAuthorized()
 {
+	FillGas();
 	M->Wait();
 	MOVE_CURSOR(0, CursorY + 1);             // move cursor to cords [x,y]
 	printf("\33[2K");

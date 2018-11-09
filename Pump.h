@@ -37,7 +37,6 @@ class Pump : public ActiveClass
 	double Bill = 0.0;
 	int FuelGrade = 87;
 	int CreditCard = 0;
-
 	int State = 0;
 	double Price = 0.0;
 	int CursorY;
@@ -46,6 +45,7 @@ class Pump : public ActiveClass
 	string CreditCardStr;
 	string FuelGradeStr;
 	string GasStr;
+	bool CustomerRecieved = 0;
 	CMutex	*M; // mutex to protect DOS window
 	
 public:
@@ -69,7 +69,7 @@ private:
 		CSemaphore ExitSem(("exit" + PumpNumber), 0, 1);
 		CSemaphore Full(("full" + PumpNumber), 0, 1);
 		CSemaphore Empty(("empty" + PumpNumber), 0, 1);
-		CSemaphore PStatus(("Producer" + PumpNumber), 1);
+		CSemaphore PStatus(("Producer" + PumpNumber), 0);
 		CSemaphore CStatus(("Consumer" + PumpNumber), 1);
 		CDataPool 		dp("dataPoolPump" + PumpNumber, sizeof(struct CustomerInfo));	// Create a datapool to communicate with gsc
 		CRendezvous     rvPump("rvPump", 4);		// Attempt to create a rendezvous object involving 4 threads
@@ -101,25 +101,24 @@ private:
 				if (CurrentGasLevel < MaxGasLevel) {
 					CurrentGasLevel += 0.5;
 					//CStatus.Wait();
+					Bill = Price * CurrentGasLevel;
+					newCustomer->Bill = Bill;
 					newCustomer->CurrentGasLevel = CurrentGasLevel;
 					//PStatus.Signal();
 					pTank->WithdrawFuel(0.5, FuelGrade);
-					//pTank->PrintTankLevel(newCustomer->FuelGrade);
-					Bill = Price * CurrentGasLevel;
-					newCustomer->Bill = Bill;
 					Print2Dos(0); // Print pump status to DOS
 					SLEEP(1000);
 
 				}
 				else {
 					Bill = Price * CurrentGasLevel;
+					State = 0;
 					//CStatus.Wait();
+					newCustomer->PumpState = State;
 					newCustomer->Bill = Bill;
 					newCustomer->Authorized = 0;
 					newCustomer->newArrival = 0;
 					//PStatus.Signal();
-					State = 0;
-					newCustomer->PumpState = 0;
 					Print2Dos(0); // Print pump status to DOS
 					// Simulate Customer leaving pump
 					CustomerDeparture();
@@ -143,20 +142,29 @@ private:
 					// Simulate Customer arriving to pump
 					CustomerArrival();
 
+					CurrentGasLevel = 0;
 					//CStatus.Wait();
+					newCustomer->CurrentGasLevel = CurrentGasLevel;
 					newCustomer->CreditCard = CreditCard;
 					newCustomer->newArrival = 1;
-					CurrentGasLevel = 0;
-					newCustomer->CurrentGasLevel = CurrentGasLevel;
 					newCustomer->PumpState = 1;
 					//PStatus.Signal();
 
 					// Wait for authorization from gas station attendant
-					while (newCustomer->customerRecieved != 1) {
+					//PStatus.Wait();
+					CustomerRecieved = newCustomer->customerRecieved;
+					//CStatus.Signal();
+					while (CustomerRecieved != 1) {
 						SLEEP(500);
+						//PStatus.Wait();
+						CustomerRecieved = newCustomer->customerRecieved;
+						//CStatus.Signal();
 					}
 
-					if (newCustomer->Authorized) {
+					//PStatus.Wait();
+					bool Authorized = newCustomer->Authorized;
+					//CStatus.Signal();
+					if (Authorized) {
 						// Simulate Customer authorization
 						CustomerAuthorized();
 						//CStatus.Wait();
@@ -168,8 +176,13 @@ private:
 					}
 					else {
 						CustomerNotAuthorized();
+						//CStatus.Wait();
+						newCustomer->PumpState = 1;
+						//PStatus.Signal();
 					}
+					//CStatus.Wait();
 					newCustomer->customerRecieved = 0;
+					//PStatus.Signal();
 				}
 			}
 		}
